@@ -26,6 +26,10 @@ class Settings(BaseSettings):
 
     api_key: Optional[str] = None
 
+    # Public-demo cost controls
+    free_queries_per_day: int = 5       # free questions per visitor (per IP), per day
+    global_daily_cap: int = 300         # hard ceiling across all visitors, per day
+
     model_config = {"env_file": ".env", "extra": "ignore"}
 
     def require_api_key(self) -> str:

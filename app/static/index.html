@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Compliance RAG Agent</title>
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --bg2: #0d1430;
+    --card: #121a2e;
+    --card2: #0f1626;
+    --border: #1f2a44;
+    --text: #e7eaf3;
+    --muted: #8a93ab;
+    --accent: #7c6cff;
+    --accent2: #9b8cff;
+    --ok: #34d399;
+    --chip: #18213a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text);
+    background: radial-gradient(1200px 700px at 80% -10%, #1a1147 0%, transparent 55%),
+                radial-gradient(1000px 600px at -10% 10%, #08213f 0%, transparent 50%),
+                var(--bg);
+    min-height: 100vh;
+  }
+  a { color: var(--accent2); }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 28px 22px 60px; }
+
+  /* Header */
+  header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 26px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .logo { width: 46px; height: 46px; border-radius: 12px;
+    background: linear-gradient(135deg, #5b8cff, #7c6cff); display: grid; place-items: center;
+    box-shadow: 0 6px 20px rgba(124,108,255,.35); font-size: 22px; }
+  .brand h1 { font-size: 24px; margin: 0; letter-spacing: .2px; }
+  .header-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .pill { display: inline-flex; align-items: center; gap: 8px; background: var(--card);
+    border: 1px solid var(--border); border-radius: 999px; padding: 8px 14px; font-size: 13px; color: var(--muted); }
+  .pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+  .btn { cursor: pointer; border: 1px solid var(--border); background: var(--card);
+    color: var(--text); border-radius: 10px; padding: 9px 14px; font-size: 13px; transition: .15s; }
+  .btn:hover { border-color: var(--accent); }
+  .btn-primary { background: linear-gradient(135deg, #6a5cff, #8b5cf6); border: none; font-weight: 600; }
+  .btn-primary:hover { filter: brightness(1.08); }
+  .btn-primary:disabled { opacity: .55; cursor: default; filter: none; }
+
+  /* Layout */
+  .grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px; align-items: start; }
+  @media (max-width: 940px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: linear-gradient(180deg, var(--card), var(--card2));
+    border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
+  .eyebrow { font-size: 12px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--muted);
+    display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+  .eyebrow .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+
+  textarea { width: 100%; min-height: 110px; resize: vertical; background: #0b1120;
+    border: 1px solid var(--border); border-radius: 12px; color: var(--text); padding: 14px;
+    font-size: 15px; font-family: inherit; outline: none; }
+  textarea:focus { border-color: var(--accent); }
+  .ask-btn { width: 100%; margin-top: 12px; padding: 14px; font-size: 15px; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+  .chip { cursor: pointer; background: var(--chip); border: 1px solid var(--border);
+    border-radius: 10px; padding: 9px 13px; font-size: 13px; color: #cdd5ea; transition: .15s; }
+  .chip:hover { border-color: var(--accent); color: #fff; }
+
+  .kb { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border);
+    font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .tag { background: var(--chip); border: 1px solid var(--border); border-radius: 8px;
+    padding: 4px 10px; color: #cdd5ea; font-size: 12px; }
+
+  /* Answer */
+  #answer-wrap { margin-top: 18px; display: none; }
+  .answer { background: #0b1120; border: 1px solid var(--border); border-radius: 12px; padding: 16px; line-height: 1.6; white-space: pre-wrap; }
+  .answer b.cite { color: var(--accent2); }
+  .cites { margin-top: 14px; display: grid; gap: 10px; }
+  .cite-item { background: var(--card2); border: 1px solid var(--border); border-left: 3px solid var(--accent);
+    border-radius: 8px; padding: 10px 12px; font-size: 13px; }
+  .cite-item .src { color: var(--accent2); font-weight: 600; }
+  .cite-item .txt { color: var(--muted); margin-top: 4px; }
+  .meta { margin-top: 10px; font-size: 12px; color: var(--muted); }
+  .err { color: #fda4af; background: rgba(244,63,94,.08); border: 1px solid rgba(244,63,94,.3);
+    border-radius: 10px; padding: 12px 14px; font-size: 14px; }
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.3);
+    border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: -3px; margin-right: 8px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Pipeline */
+  .step { display: flex; gap: 14px; padding: 12px 0; border-bottom: 1px dashed var(--border); }
+  .step:last-child { border-bottom: none; }
+  .step .ic { width: 40px; height: 40px; flex: 0 0 40px; border-radius: 10px; display: grid; place-items: center;
+    background: #0b1120; border: 1px solid var(--border); font-size: 18px; }
+  .step h4 { margin: 0 0 3px; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+  .step p { margin: 0; font-size: 12.5px; color: var(--muted); }
+  .badge { font-size: 10px; letter-spacing: .6px; padding: 2px 7px; border-radius: 6px; text-transform: uppercase; font-weight: 700; }
+  .b-guard { background: rgba(52,211,153,.14); color: #5eead4; }
+  .b-hybrid { background: rgba(124,108,255,.16); color: var(--accent2); }
+  .b-llm { background: rgba(251,191,36,.14); color: #fcd34d; }
+  .b-cite { background: rgba(96,165,250,.16); color: #93c5fd; }
+
+  /* Flow */
+  .flow { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 4px; }
+  .node { background: #0b1120; border: 1px solid var(--border); border-radius: 12px; padding: 14px; text-align: center; }
+  .node .nic { font-size: 22px; }
+  .node .nt { font-weight: 600; font-size: 13px; margin-top: 6px; }
+  .node .ns { font-size: 11px; color: var(--muted); }
+  .node.full { grid-column: 1 / -1; }
+  .gcp { color: #8ab4f8; }
+
+  /* BYOK panel */
+  #key-panel { display: none; margin-top: 12px; background: #0b1120; border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px; }
+  #key-panel input { width: 100%; background: #070b16; border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text); padding: 10px; font-size: 13px; outline: none; }
+  #key-panel input:focus { border-color: var(--accent); }
+  .key-row { display: flex; gap: 8px; margin-top: 10px; }
+  .key-note { font-size: 11.5px; color: var(--muted); margin-top: 8px; }
+  .footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 34px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo">🛡️</div>
+      <h1>Compliance RAG Agent</h1>
+    </div>
+    <div class="header-right">
+      <div class="pill"><span class="dot"></span><span id="status-text">connecting…</span></div>
+      <button class="btn" id="key-toggle">🔑 <span id="key-label">Use your own key</span></button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- LEFT -->
+    <section class="card">
+      <div class="eyebrow"><span class="dot"></span> Ask a question</div>
+      <textarea id="q" placeholder="e.g. What is the right to erasure under the GDPR?"></textarea>
+      <button class="btn btn-primary ask-btn" id="ask">Ask →</button>
+
+      <div id="key-panel">
+        <div style="font-size:13px;font-weight:600;margin-bottom:6px;">Use your own OpenAI key</div>
+        <input id="key-input" type="password" placeholder="sk-..." autocomplete="off" />
+        <div class="key-row">
+          <button class="btn btn-primary" id="key-save" style="flex:1;">Save</button>
+          <button class="btn" id="key-clear">Remove</button>
+        </div>
+        <div class="key-note">🔒 Stored only in your browser (localStorage) and sent with your own requests.
+          It is never saved on the server.</div>
+      </div>
+
+      <div class="chips" id="chips">
+        <div class="chip">What is the right to erasure?</div>
+        <div class="chip">What are the penalties for non-compliance?</div>
+        <div class="chip">When is a Data Protection Officer required?</div>
+        <div class="chip">What rights do data subjects have?</div>
+      </div>
+
+      <div class="kb">
+        📚 <strong style="color:#cdd5ea;">Knowledge base</strong> — ask about:
+        <span class="tag" id="kb-doc">loading…</span>
+        <span>· read-only demo corpus</span>
+      </div>
+
+      <div id="answer-wrap">
+        <div id="answer-body"></div>
+        <div class="cites" id="cites"></div>
+        <div class="meta" id="answer-meta"></div>
+      </div>
+    </section>
+
+    <!-- RIGHT -->
+    <aside style="display:grid; gap:20px;">
+      <section class="card">
+        <div class="eyebrow"><span class="dot"></span> Pipeline · under the hood</div>
+        <div class="step">
+          <div class="ic">🛡️</div>
+          <div><h4>Validate <span class="badge b-guard">Guardrail</span></h4><p>Question length &amp; safety checks</p></div>
+        </div>
+        <div class="step">
+          <div class="ic">🔎</div>
+          <div><h4>Retrieve <span class="badge b-hybrid">Hybrid</span></h4><p>Vector + keyword search, fused with RRF</p></div>
+        </div>
+        <div class="step">
+          <div class="ic">🤖</div>
+          <div><h4>Generate <span class="badge b-llm">LLM</span></h4><p>Grounded answer from retrieved context</p></div>
+        </div>
+        <div class="step">
+          <div class="ic">🔗</div>
+          <div><h4>Format <span class="badge b-cite">Citations</span></h4><p>Attach verifiable source references</p></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="eyebrow gcp"><span class="dot"></span> Google Cloud request flow</div>
+        <div class="flow">
+          <div class="node"><div class="nic">🌐</div><div class="nt">Browser</div><div class="ns">you</div></div>
+          <div class="node"><div class="nic gcp">⚙️</div><div class="nt">Cloud Run</div><div class="ns">FastAPI app</div></div>
+          <div class="node"><div class="nic">🗂️</div><div class="nt">ChromaDB</div><div class="ns">vector search</div></div>
+          <div class="node"><div class="nic">🔐</div><div class="nt gcp">Secret Manager</div><div class="ns">API keys</div></div>
+          <div class="node full"><div class="nic">🧠</div><div class="nt">OpenAI</div><div class="ns">embeddings + LLM</div></div>
+        </div>
+      </section>
+    </aside>
+  </div>
+
+  <div class="footer">Built with FastAPI · LangGraph · ChromaDB · OpenAI — deployed on Google Cloud Run</div>
+</div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  let byok = localStorage.getItem("byok") || "";
+
+  const esc = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  const renderAnswer = (txt) => esc(txt).replace(/\[(\d+)\]/g, '<b class="cite">[$1]</b>');
+
+  function renderKeyUI(freeRemaining) {
+    if (byok) {
+      $("key-label").textContent = "Using your own key — Remove";
+    } else if (freeRemaining !== undefined && freeRemaining !== null) {
+      $("key-label").textContent = `${freeRemaining} free left · Use your own key`;
+    } else {
+      $("key-label").textContent = "Use your own key";
+    }
+  }
+
+  async function loadStatus() {
+    try {
+      const s = await fetch("/collection/stats").then((r) => r.json());
+      const docs = (s.sources || []).length;
+      $("status-text").textContent = `${s.total_chunks} chunks · ${docs} document(s)`;
+      $("kb-doc").textContent = (s.sources && s.sources[0]) || "demo corpus";
+    } catch { $("status-text").textContent = "offline"; }
+
+    if (!byok) {
+      try {
+        const l = await fetch("/api/limits").then((r) => r.json());
+        renderKeyUI(l.free_remaining);
+      } catch { renderKeyUI(); }
+    } else { renderKeyUI(); }
+  }
+
+  async function ask() {
+    const q = $("q").value.trim();
+    if (!q) return;
+    $("answer-wrap").style.display = "block";
+    $("answer-body").innerHTML = '<div class="answer"><span class="spinner"></span>Thinking…</div>';
+    $("cites").innerHTML = "";
+    $("answer-meta").textContent = "";
+    $("ask").disabled = true;
+
+    try {
+      const headers = byok ? { "X-OpenAI-Key": byok } : {};
+      const body = new FormData();
+      body.append("question", q);
+      const res = await fetch("/query", { method: "POST", headers, body });
+      const data = await res.json();
+
+      if (!res.ok) {
+        $("answer-body").innerHTML = `<div class="err">${esc(data.detail || "Something went wrong.")}</div>`;
+        if (res.status === 429) $("key-panel").style.display = "block";
+        return;
+      }
+
+      $("answer-body").innerHTML = `<div class="answer">${renderAnswer(data.answer)}</div>`;
+      $("cites").innerHTML = (data.citations || [])
+        .map((c, i) => `<div class="cite-item"><span class="src">[${i + 1}] ${esc(c.source)} · Page ${c.page}</span>
+          <div class="txt">${esc(c.text)}</div></div>`).join("");
+      const tags = [`model: ${esc(data.model)}`, `${data.chunks_used} chunks used`];
+      if (data.used_own_key) tags.push("your key");
+      else if (data.free_remaining !== null && data.free_remaining !== undefined) tags.push(`${data.free_remaining} free left`);
+      $("answer-meta").textContent = tags.join("  ·  ");
+      if (!data.used_own_key) renderKeyUI(data.free_remaining);
+    } catch {
+      $("answer-body").innerHTML = `<div class="err">Network error. Please try again.</div>`;
+    } finally {
+      $("ask").disabled = false;
+    }
+  }
+
+  // Events
+  $("ask").addEventListener("click", ask);
+  $("q").addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) ask(); });
+  $("chips").addEventListener("click", (e) => {
+    if (e.target.classList.contains("chip")) { $("q").value = e.target.textContent.trim(); ask(); }
+  });
+  $("key-toggle").addEventListener("click", () => {
+    if (byok) { // currently using own key -> open panel pre-filled
+      $("key-input").value = byok;
+    }
+    const p = $("key-panel");
+    p.style.display = p.style.display === "block" ? "none" : "block";
+  });
+  $("key-save").addEventListener("click", () => {
+    const v = $("key-input").value.trim();
+    if (!v.startsWith("sk-")) { alert("That doesn't look like an OpenAI key (should start with 'sk-')."); return; }
+    byok = v; localStorage.setItem("byok", v);
+    $("key-panel").style.display = "none"; renderKeyUI();
+  });
+  $("key-clear").addEventListener("click", () => {
+    byok = ""; localStorage.removeItem("byok");
+    $("key-input").value = ""; $("key-panel").style.display = "none";
+    loadStatus();
+  });
+
+  loadStatus();
+</script>
+</body>
+</html>

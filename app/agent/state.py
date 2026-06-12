@@ -22,3 +22,5 @@ class QAState(TypedDict):
     answer: str
     citations: List[Citation]
     error: Optional[str]
+    # Per-request OpenAI key (bring-your-own-key). None -> use the server's key.
+    api_key: Optional[str]

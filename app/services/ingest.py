@@ -1,5 +1,5 @@
 import hashlib
-from typing import List
+from typing import List, Optional
 
 import chromadb
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -30,8 +30,8 @@ def get_collection() -> chromadb.Collection:
     )
 
 
-def embed_texts(texts: List[str]) -> List[List[float]]:
-    client = OpenAI(api_key=settings.require_api_key())
+def embed_texts(texts: List[str], api_key: Optional[str] = None) -> List[List[float]]:
+    client = OpenAI(api_key=api_key or settings.require_api_key())
     response = client.embeddings.create(
         model=settings.embedding_model,
         input=texts,

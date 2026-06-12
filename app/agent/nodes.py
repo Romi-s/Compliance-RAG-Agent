@@ -17,7 +17,7 @@ def retrieve(state: QAState) -> dict:
     if state.get("error"):
         return {}
     try:
-        chunks = hybrid_retrieve(state["question"])
+        chunks = hybrid_retrieve(state["question"], api_key=state.get("api_key"))
         if not chunks:
             return {"error": "No relevant documents found. Please ingest documents first."}
         return {"retrieved_chunks": chunks}
@@ -31,7 +31,7 @@ def generate(state: QAState) -> dict:
     try:
         from openai import OpenAI
 
-        client = OpenAI(api_key=settings.require_api_key())
+        client = OpenAI(api_key=state.get("api_key") or settings.require_api_key())
 
         context_parts = []
         for i, chunk in enumerate(state["retrieved_chunks"], 1):

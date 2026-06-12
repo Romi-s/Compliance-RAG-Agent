@@ -38,7 +38,9 @@ def invalidate_bm25_cache():
     _bm25_cache = None
 
 
-def hybrid_retrieve(query: str, top_k: Optional[int] = None) -> List[RetrievedChunk]:
+def hybrid_retrieve(
+    query: str, top_k: Optional[int] = None, api_key: Optional[str] = None
+) -> List[RetrievedChunk]:
     if top_k is None:
         top_k = settings.final_top_k
     retrieval_k = settings.retrieval_top_k
@@ -49,7 +51,7 @@ def hybrid_retrieve(query: str, top_k: Optional[int] = None) -> List[RetrievedCh
         return []
 
     # --- vector search ---
-    query_embedding = embed_texts([query])[0]
+    query_embedding = embed_texts([query], api_key=api_key)[0]
     vector_results = collection.query(
         query_embeddings=[query_embedding],
         n_results=min(retrieval_k, doc_count),

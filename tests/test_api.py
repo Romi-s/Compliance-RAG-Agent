@@ -95,31 +95,50 @@ class TestHealthEndpoint:
 
 
 class TestApiKeyAuth:
-    @patch("app.api.routes.settings")
-    def test_rejects_missing_key_when_configured(self, mock_settings):
-        mock_settings.api_key = "secret-key"
-        mock_settings.max_file_size_mb = 50
-        response = client.get("/collection/stats")
-        assert response.status_code == 401
+    """The API-key gate protects /ingest (owner-only). /collection/stats is public,
+    read-only so the demo UI can display the chunk/document count without a key."""
 
     @patch("app.api.routes.settings")
     @patch("app.api.routes.get_collection")
-    def test_accepts_valid_key(self, mock_get, mock_settings):
+    def test_stats_is_public(self, mock_get, mock_settings):
         mock_settings.api_key = "secret-key"
         mock_col = MagicMock()
         mock_col.count.return_value = 0
         mock_get.return_value = mock_col
-        response = client.get(
-            "/collection/stats",
-            headers={"X-API-Key": "secret-key"},
-        )
+        response = client.get("/collection/stats")
         assert response.status_code == 200
 
     @patch("app.api.routes.settings")
-    def test_rejects_wrong_key(self, mock_settings):
+    def test_ingest_rejects_missing_key(self, mock_settings):
         mock_settings.api_key = "secret-key"
-        response = client.get(
-            "/collection/stats",
+        mock_settings.max_file_size_mb = 50
+        response = client.post(
+            "/ingest",
+            files={"file": ("rules.txt", b"hi", "text/plain")},
+        )
+        assert response.status_code == 401
+
+    @patch("app.api.routes.settings")
+    def test_ingest_rejects_wrong_key(self, mock_settings):
+        mock_settings.api_key = "secret-key"
+        mock_settings.max_file_size_mb = 50
+        response = client.post(
+            "/ingest",
+            files={"file": ("rules.txt", b"hi", "text/plain")},
             headers={"X-API-Key": "wrong-key"},
         )
         assert response.status_code == 401
+
+    @patch("app.api.routes.settings")
+    @patch("app.api.routes.ingest_text")
+    @patch("app.api.routes.invalidate_bm25_cache")
+    def test_ingest_accepts_valid_key(self, mock_cache, mock_ingest, mock_settings):
+        mock_settings.api_key = "secret-key"
+        mock_settings.max_file_size_mb = 50
+        mock_ingest.return_value = {"filename": "rules.txt", "chunks_added": 3}
+        response = client.post(
+            "/ingest",
+            files={"file": ("rules.txt", b"hi", "text/plain")},
+            headers={"X-API-Key": "secret-key"},
+        )
+        assert response.status_code == 200

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from pydantic import BaseModel
 
@@ -14,6 +14,8 @@ class QueryResponse(BaseModel):
     citations: List[CitationResponse]
     model: str
     chunks_used: int
+    free_remaining: Optional[int] = None
+    used_own_key: bool = False
 
 
 class IngestResponse(BaseModel):
