@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     openai_api_key: Optional[str] = None
-    openai_model: str = "gpt-4o"
+    openai_model: str = "gpt-4o-mini"
     embedding_model: str = "text-embedding-3-small"
 
     chroma_host: Optional[str] = None
@@ -28,7 +28,10 @@ class Settings(BaseSettings):
 
     # Public-demo cost controls
     free_queries_per_day: int = 5       # free questions per visitor (per IP), per day
+    free_uploads_per_day: int = 3       # free document uploads per visitor (per IP), per day
     global_daily_cap: int = 300         # hard ceiling across all visitors, per day
+    max_upload_mb: int = 5              # size cap for public demo uploads (owner uses max_file_size_mb)
+    max_demo_pdf_pages: int = 30        # page cap for public demo PDF uploads
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 

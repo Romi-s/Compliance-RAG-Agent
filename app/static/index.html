@@ -6,76 +6,59 @@
 <title>Compliance RAG Agent</title>
 <style>
   :root {
-    --bg: #0a0e1a;
-    --bg2: #0d1430;
-    --card: #121a2e;
-    --card2: #0f1626;
-    --border: #1f2a44;
-    --text: #e7eaf3;
-    --muted: #8a93ab;
-    --accent: #7c6cff;
-    --accent2: #9b8cff;
-    --ok: #34d399;
-    --chip: #18213a;
+    --bg: #0a0e1a; --card: #121a2e; --card2: #0f1626; --border: #1f2a44;
+    --text: #e7eaf3; --muted: #8a93ab; --accent: #7c6cff; --accent2: #9b8cff;
+    --ok: #34d399; --chip: #18213a; --blue: #5b8cff; --purple: #9b6cff;
   }
   * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+  body { margin: 0; font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
     color: var(--text);
     background: radial-gradient(1200px 700px at 80% -10%, #1a1147 0%, transparent 55%),
-                radial-gradient(1000px 600px at -10% 10%, #08213f 0%, transparent 50%),
-                var(--bg);
-    min-height: 100vh;
-  }
-  a { color: var(--accent2); }
+                radial-gradient(1000px 600px at -10% 10%, #08213f 0%, transparent 50%), var(--bg);
+    min-height: 100vh; }
   .wrap { max-width: 1280px; margin: 0 auto; padding: 28px 22px 60px; }
 
-  /* Header */
   header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 26px; flex-wrap: wrap; }
   .brand { display: flex; align-items: center; gap: 14px; }
-  .logo { width: 46px; height: 46px; border-radius: 12px;
-    background: linear-gradient(135deg, #5b8cff, #7c6cff); display: grid; place-items: center;
-    box-shadow: 0 6px 20px rgba(124,108,255,.35); font-size: 22px; }
-  .brand h1 { font-size: 24px; margin: 0; letter-spacing: .2px; }
+  .logo { width: 46px; height: 46px; border-radius: 12px; background: linear-gradient(135deg, #5b8cff, #7c6cff);
+    display: grid; place-items: center; box-shadow: 0 6px 20px rgba(124,108,255,.35); font-size: 22px; }
+  .brand h1 { font-size: 24px; margin: 0; }
   .header-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-  .pill { display: inline-flex; align-items: center; gap: 8px; background: var(--card);
-    border: 1px solid var(--border); border-radius: 999px; padding: 8px 14px; font-size: 13px; color: var(--muted); }
+  .pill { display: inline-flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; color: var(--muted); }
   .pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 8px var(--ok); }
-  .btn { cursor: pointer; border: 1px solid var(--border); background: var(--card);
-    color: var(--text); border-radius: 10px; padding: 9px 14px; font-size: 13px; transition: .15s; }
+  .btn { cursor: pointer; border: 1px solid var(--border); background: var(--card); color: var(--text);
+    border-radius: 10px; padding: 9px 14px; font-size: 13px; transition: .15s; }
   .btn:hover { border-color: var(--accent); }
   .btn-primary { background: linear-gradient(135deg, #6a5cff, #8b5cf6); border: none; font-weight: 600; }
   .btn-primary:hover { filter: brightness(1.08); }
   .btn-primary:disabled { opacity: .55; cursor: default; filter: none; }
 
-  /* Layout */
   .grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px; align-items: start; }
   @media (max-width: 940px) { .grid { grid-template-columns: 1fr; } }
-  .card { background: linear-gradient(180deg, var(--card), var(--card2));
-    border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
+  .col { display: grid; gap: 20px; }
+  .card { background: linear-gradient(180deg, var(--card), var(--card2)); border: 1px solid var(--border);
+    border-radius: 16px; padding: 20px; }
   .eyebrow { font-size: 12px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--muted);
     display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
   .eyebrow .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+  .gcp { color: #8ab4f8; }
 
-  textarea { width: 100%; min-height: 110px; resize: vertical; background: #0b1120;
-    border: 1px solid var(--border); border-radius: 12px; color: var(--text); padding: 14px;
-    font-size: 15px; font-family: inherit; outline: none; }
+  textarea { width: 100%; min-height: 110px; resize: vertical; background: #0b1120; border: 1px solid var(--border);
+    border-radius: 12px; color: var(--text); padding: 14px; font-size: 15px; font-family: inherit; outline: none; }
   textarea:focus { border-color: var(--accent); }
   .ask-btn { width: 100%; margin-top: 12px; padding: 14px; font-size: 15px; }
 
   .chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
-  .chip { cursor: pointer; background: var(--chip); border: 1px solid var(--border);
-    border-radius: 10px; padding: 9px 13px; font-size: 13px; color: #cdd5ea; transition: .15s; }
+  .chip { cursor: pointer; background: var(--chip); border: 1px solid var(--border); border-radius: 10px;
+    padding: 9px 13px; font-size: 13px; color: #cdd5ea; transition: .15s; }
   .chip:hover { border-color: var(--accent); color: #fff; }
 
-  .kb { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border);
-    font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .tag { background: var(--chip); border: 1px solid var(--border); border-radius: 8px;
-    padding: 4px 10px; color: #cdd5ea; font-size: 12px; }
+  .kb { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 13px; color: var(--muted);
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .tag { background: var(--chip); border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px; color: #cdd5ea; font-size: 12px; }
 
-  /* Answer */
-  #answer-wrap { margin-top: 18px; display: none; }
+  #answer-wrap { margin-top: 0; display: none; }
   .answer { background: #0b1120; border: 1px solid var(--border); border-radius: 12px; padding: 16px; line-height: 1.6; white-space: pre-wrap; }
   .answer b.cite { color: var(--accent2); }
   .cites { margin-top: 14px; display: grid; gap: 10px; }
@@ -84,39 +67,67 @@
   .cite-item .src { color: var(--accent2); font-weight: 600; }
   .cite-item .txt { color: var(--muted); margin-top: 4px; }
   .meta { margin-top: 10px; font-size: 12px; color: var(--muted); }
-  .err { color: #fda4af; background: rgba(244,63,94,.08); border: 1px solid rgba(244,63,94,.3);
-    border-radius: 10px; padding: 12px 14px; font-size: 14px; }
-  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.3);
-    border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: -3px; margin-right: 8px; }
+  .err { color: #fda4af; background: rgba(244,63,94,.08); border: 1px solid rgba(244,63,94,.3); border-radius: 10px; padding: 12px 14px; font-size: 14px; }
+  .ok-msg { color: #6ee7b7; background: rgba(52,211,153,.08); border: 1px solid rgba(52,211,153,.3); border-radius: 10px; padding: 10px 12px; font-size: 13px; }
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff;
+    border-radius: 50%; animation: spin .7s linear infinite; vertical-align: -3px; margin-right: 8px; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
   /* Pipeline */
-  .step { display: flex; gap: 14px; padding: 12px 0; border-bottom: 1px dashed var(--border); }
-  .step:last-child { border-bottom: none; }
+  .steps { position: relative; }
+  .steps::before { content: ''; position: absolute; left: 19px; top: 14px; bottom: 14px; width: 2px;
+    background: linear-gradient(var(--accent), rgba(124,108,255,.05)); opacity: .5; }
+  .step { display: flex; gap: 14px; padding: 11px 0; position: relative; opacity: .55; transition: opacity .3s; }
+  .step.done, .step.active { opacity: 1; }
   .step .ic { width: 40px; height: 40px; flex: 0 0 40px; border-radius: 10px; display: grid; place-items: center;
-    background: #0b1120; border: 1px solid var(--border); font-size: 18px; }
+    background: #0b1120; border: 1px solid var(--border); font-size: 18px; z-index: 1; }
+  .step.done .ic { border-color: var(--ok); }
+  .step-main { flex: 1; min-width: 0; }
   .step h4 { margin: 0 0 3px; font-size: 15px; display: flex; align-items: center; gap: 8px; }
   .step p { margin: 0; font-size: 12.5px; color: var(--muted); }
+  .check { margin-left: auto; color: var(--ok); opacity: 0; transition: opacity .3s; font-weight: 700; }
+  .step.done .check { opacity: 1; }
   .badge { font-size: 10px; letter-spacing: .6px; padding: 2px 7px; border-radius: 6px; text-transform: uppercase; font-weight: 700; }
   .b-guard { background: rgba(52,211,153,.14); color: #5eead4; }
   .b-hybrid { background: rgba(124,108,255,.16); color: var(--accent2); }
   .b-llm { background: rgba(251,191,36,.14); color: #fcd34d; }
   .b-cite { background: rgba(96,165,250,.16); color: #93c5fd; }
+  .detail { font-size: 12px; color: #aab3c9; margin-top: 8px; display: none; }
+  .step.done .detail, .step.active .detail { display: block; }
+  .detail b { color: var(--accent2); }
+  .barline { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+  .barline .lbl { width: 46px; font-size: 10px; color: var(--muted); text-transform: uppercase; }
+  .bars { display: flex; align-items: flex-end; gap: 3px; height: 22px; }
+  .bar { width: 7px; border-radius: 2px; }
+  .bar.v { background: linear-gradient(var(--blue), #2d4f9e); }
+  .bar.b { background: linear-gradient(var(--purple), #4f2d9e); }
+  .rrf { margin-top: 7px; color: #aab3c9; }
+  .model-badge { display: inline-block; background: rgba(52,211,153,.12); color: #6ee7b7; border: 1px solid rgba(52,211,153,.3);
+    border-radius: 7px; padding: 3px 9px; font-size: 12px; font-weight: 600; font-family: ui-monospace, monospace; }
+  .gen-bar { height: 5px; border-radius: 3px; background: #0b1120; overflow: hidden; margin-top: 8px; }
+  .gen-bar i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+  .cite-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 8px; }
+  .cite-chip { background: var(--chip); border: 1px solid var(--border); border-radius: 7px; padding: 3px 9px; font-size: 11.5px; color: #cdd5ea; }
 
   /* Flow */
-  .flow { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 4px; }
+  .flow { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .node { background: #0b1120; border: 1px solid var(--border); border-radius: 12px; padding: 14px; text-align: center; }
   .node .nic { font-size: 22px; }
   .node .nt { font-weight: 600; font-size: 13px; margin-top: 6px; }
   .node .ns { font-size: 11px; color: var(--muted); }
   .node.full { grid-column: 1 / -1; }
-  .gcp { color: #8ab4f8; }
 
-  /* BYOK panel */
-  #key-panel { display: none; margin-top: 12px; background: #0b1120; border: 1px solid var(--border);
-    border-radius: 12px; padding: 14px; }
-  #key-panel input { width: 100%; background: #070b16; border: 1px solid var(--border); border-radius: 8px;
-    color: var(--text); padding: 10px; font-size: 13px; outline: none; }
+  /* Upload */
+  .upload-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  input[type=file] { color: var(--muted); font-size: 13px; }
+  input[type=file]::file-selector-button { background: var(--chip); color: var(--text); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 12px; margin-right: 10px; cursor: pointer; }
+  .upload-note { font-size: 11.5px; color: var(--muted); margin-top: 10px; }
+  #ingest-msg { margin-top: 12px; }
+
+  /* BYOK */
+  #key-panel { display: none; margin-top: 12px; background: #0b1120; border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+  #key-panel input { width: 100%; background: #070b16; border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 10px; font-size: 13px; outline: none; }
   #key-panel input:focus { border-color: var(--accent); }
   .key-row { display: flex; gap: 8px; margin-top: 10px; }
   .key-note { font-size: 11.5px; color: var(--muted); margin-top: 8px; }
@@ -126,10 +137,7 @@
 <body>
 <div class="wrap">
   <header>
-    <div class="brand">
-      <div class="logo">🛡️</div>
-      <h1>Compliance RAG Agent</h1>
-    </div>
+    <div class="brand"><div class="logo">🛡️</div><h1>Compliance RAG Agent</h1></div>
     <div class="header-right">
       <div class="pill"><span class="dot"></span><span id="status-text">connecting…</span></div>
       <button class="btn" id="key-toggle">🔑 <span id="key-label">Use your own key</span></button>
@@ -138,61 +146,80 @@
 
   <div class="grid">
     <!-- LEFT -->
-    <section class="card">
-      <div class="eyebrow"><span class="dot"></span> Ask a question</div>
-      <textarea id="q" placeholder="e.g. What is the right to erasure under the GDPR?"></textarea>
-      <button class="btn btn-primary ask-btn" id="ask">Ask →</button>
+    <div class="col">
+      <section class="card">
+        <div class="eyebrow"><span class="dot"></span> Ask a question</div>
+        <textarea id="q" placeholder="e.g. What is the right to erasure under the GDPR?"></textarea>
+        <button class="btn btn-primary ask-btn" id="ask">Ask →</button>
 
-      <div id="key-panel">
-        <div style="font-size:13px;font-weight:600;margin-bottom:6px;">Use your own OpenAI key</div>
-        <input id="key-input" type="password" placeholder="sk-..." autocomplete="off" />
-        <div class="key-row">
-          <button class="btn btn-primary" id="key-save" style="flex:1;">Save</button>
-          <button class="btn" id="key-clear">Remove</button>
+        <div id="key-panel">
+          <div style="font-size:13px;font-weight:600;margin-bottom:6px;">Use your own OpenAI key</div>
+          <input id="key-input" type="password" placeholder="sk-..." autocomplete="off" />
+          <div class="key-row">
+            <button class="btn btn-primary" id="key-save" style="flex:1;">Save</button>
+            <button class="btn" id="key-clear">Remove</button>
+          </div>
+          <div class="key-note">🔒 Stored only in your browser and sent with your own requests. Never saved on the server.</div>
         </div>
-        <div class="key-note">🔒 Stored only in your browser (localStorage) and sent with your own requests.
-          It is never saved on the server.</div>
-      </div>
 
-      <div class="chips" id="chips">
-        <div class="chip">What is the right to erasure?</div>
-        <div class="chip">What are the penalties for non-compliance?</div>
-        <div class="chip">When is a Data Protection Officer required?</div>
-        <div class="chip">What rights do data subjects have?</div>
-      </div>
+        <div class="chips" id="chips">
+          <div class="chip">What is the right to erasure?</div>
+          <div class="chip">What are the penalties for non-compliance?</div>
+          <div class="chip">When is a Data Protection Officer required?</div>
+          <div class="chip">What rights do data subjects have?</div>
+        </div>
 
-      <div class="kb">
-        📚 <strong style="color:#cdd5ea;">Knowledge base</strong> — ask about:
-        <span class="tag" id="kb-doc">loading…</span>
-        <span>· read-only demo corpus</span>
-      </div>
+        <div class="kb">
+          📚 <strong style="color:#cdd5ea;">Knowledge base</strong> — ask about:
+          <span id="kb-tags"><span class="tag">loading…</span></span>
+        </div>
+      </section>
 
-      <div id="answer-wrap">
+      <section class="card" id="answer-wrap">
+        <div class="eyebrow"><span class="dot"></span> Answer</div>
         <div id="answer-body"></div>
         <div class="cites" id="cites"></div>
         <div class="meta" id="answer-meta"></div>
-      </div>
-    </section>
+      </section>
+    </div>
 
     <!-- RIGHT -->
-    <aside style="display:grid; gap:20px;">
+    <div class="col">
       <section class="card">
         <div class="eyebrow"><span class="dot"></span> Pipeline · under the hood</div>
-        <div class="step">
-          <div class="ic">🛡️</div>
-          <div><h4>Validate <span class="badge b-guard">Guardrail</span></h4><p>Question length &amp; safety checks</p></div>
-        </div>
-        <div class="step">
-          <div class="ic">🔎</div>
-          <div><h4>Retrieve <span class="badge b-hybrid">Hybrid</span></h4><p>Vector + keyword search, fused with RRF</p></div>
-        </div>
-        <div class="step">
-          <div class="ic">🤖</div>
-          <div><h4>Generate <span class="badge b-llm">LLM</span></h4><p>Grounded answer from retrieved context</p></div>
-        </div>
-        <div class="step">
-          <div class="ic">🔗</div>
-          <div><h4>Format <span class="badge b-cite">Citations</span></h4><p>Attach verifiable source references</p></div>
+        <div class="steps">
+          <div class="step" id="s-validate">
+            <div class="ic">🛡️</div>
+            <div class="step-main">
+              <h4>Validate <span class="badge b-guard">Guardrail</span><span class="check">✓</span></h4>
+              <p>Question length &amp; safety checks</p>
+              <div class="detail" id="d-validate"></div>
+            </div>
+          </div>
+          <div class="step" id="s-retrieve">
+            <div class="ic">🔎</div>
+            <div class="step-main">
+              <h4>Retrieve <span class="badge b-hybrid">Hybrid</span><span class="check">✓</span></h4>
+              <p>Vector + keyword search, fused with RRF</p>
+              <div class="detail" id="d-retrieve"></div>
+            </div>
+          </div>
+          <div class="step" id="s-generate">
+            <div class="ic">🤖</div>
+            <div class="step-main">
+              <h4>Generate <span class="badge b-llm">LLM</span><span class="check">✓</span></h4>
+              <p>Grounded answer from retrieved context</p>
+              <div class="detail" id="d-generate"></div>
+            </div>
+          </div>
+          <div class="step" id="s-format">
+            <div class="ic">🔗</div>
+            <div class="step-main">
+              <h4>Format <span class="badge b-cite">Citations</span><span class="check">✓</span></h4>
+              <p>Attach verifiable source references</p>
+              <div class="detail" id="d-format"></div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -206,7 +233,17 @@
           <div class="node full"><div class="nic">🧠</div><div class="nt">OpenAI</div><div class="ns">embeddings + LLM</div></div>
         </div>
       </section>
-    </aside>
+
+      <section class="card">
+        <div class="eyebrow"><span class="dot"></span> Add a document</div>
+        <div class="upload-row">
+          <input type="file" id="file" accept=".pdf,.txt,.md,.csv" />
+          <button class="btn btn-primary" id="ingest">Ingest</button>
+        </div>
+        <div id="ingest-msg"></div>
+        <div class="upload-note">PDF or text, up to <span id="max-mb">5</span> MB. A few uploads per visitor — set your own key above to skip the limit.</div>
+      </section>
+    </div>
   </div>
 
   <div class="footer">Built with FastAPI · LangGraph · ChromaDB · OpenAI — deployed on Google Cloud Run</div>
@@ -216,96 +253,162 @@
   const $ = (id) => document.getElementById(id);
   let byok = localStorage.getItem("byok") || "";
 
-  const esc = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
-  const renderAnswer = (txt) => esc(txt).replace(/\[(\d+)\]/g, '<b class="cite">[$1]</b>');
+  const esc = (s) => (s || "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  const renderAnswer = (t) => esc(t).replace(/\[(\d+)\]/g, '<b class="cite">[$1]</b>');
 
   function renderKeyUI(freeRemaining) {
-    if (byok) {
-      $("key-label").textContent = "Using your own key — Remove";
-    } else if (freeRemaining !== undefined && freeRemaining !== null) {
-      $("key-label").textContent = `${freeRemaining} free left · Use your own key`;
-    } else {
-      $("key-label").textContent = "Use your own key";
-    }
+    if (byok) $("key-label").textContent = "Using your own key — Remove";
+    else if (freeRemaining !== undefined && freeRemaining !== null) $("key-label").textContent = `${freeRemaining} free left · Use your own key`;
+    else $("key-label").textContent = "Use your own key";
+  }
+
+  function renderKbTags(sources) {
+    const tags = (sources && sources.length) ? sources : ["demo corpus"];
+    $("kb-tags").innerHTML = tags.slice(0, 4).map((s) => `<span class="tag">${esc(s)}</span>`).join(" ");
+  }
+
+  function renderStats(s) {
+    const docs = (s.sources || []).length;
+    $("status-text").textContent = `${s.total_chunks} chunks · ${docs} document(s)`;
+    renderKbTags(s.sources);
   }
 
   async function loadStatus() {
     try {
-      const s = await fetch("/collection/stats").then((r) => r.json());
-      const docs = (s.sources || []).length;
-      $("status-text").textContent = `${s.total_chunks} chunks · ${docs} document(s)`;
-      $("kb-doc").textContent = (s.sources && s.sources[0]) || "demo corpus";
+      let s = await fetch("/collection/stats").then((r) => r.json());
+      // On first boot the demo corpus seeds in the background; poll until it's ready
+      // so the default document shows up without needing a manual refresh.
+      let tries = 0;
+      while (s.total_chunks === 0 && tries < 10) {
+        $("status-text").textContent = "warming up the demo…";
+        $("kb-tags").innerHTML = '<span class="tag">loading…</span>';
+        await new Promise((r) => setTimeout(r, 2000));
+        s = await fetch("/collection/stats").then((r) => r.json());
+        tries++;
+      }
+      renderStats(s);
+      if (s.total_chunks > 0) loadSuggestions();
     } catch { $("status-text").textContent = "offline"; }
+    if (!byok) { try { renderKeyUI((await fetch("/api/limits").then((r) => r.json())).free_remaining); } catch { renderKeyUI(); } }
+    else renderKeyUI();
+  }
 
-    if (!byok) {
-      try {
-        const l = await fetch("/api/limits").then((r) => r.json());
-        renderKeyUI(l.free_remaining);
-      } catch { renderKeyUI(); }
-    } else { renderKeyUI(); }
+  async function loadSuggestions() {
+    try {
+      const d = await fetch("/api/suggestions").then((r) => r.json());
+      if (d.suggestions && d.suggestions.length)
+        $("chips").innerHTML = d.suggestions.map((q) => `<div class="chip">${esc(q)}</div>`).join("");
+    } catch { /* keep the default chips already in the HTML */ }
+  }
+
+  // ---- live pipeline ----
+  const bars = (cls, n = 12) => Array.from({ length: n }, () => `<span class="bar ${cls}" style="height:${6 + (Math.random() * 16 | 0)}px"></span>`).join("");
+  function extractChips(retrieved) {
+    const labels = new Set();
+    (retrieved || []).forEach((r) => {
+      (r.text.match(/\bArticle\s+(\d+)/gi) || []).forEach((m) => labels.add("Art. " + m.match(/\d+/)[0]));
+      (r.text.match(/\bRecital\s+(\d+)/gi) || []).forEach((m) => labels.add("Recital " + m.match(/\d+/)[0]));
+    });
+    let arr = [...labels];
+    if (!arr.length) arr = (retrieved || []).slice(0, 4).map((r) => `${r.source} · p${r.page}`);
+    return arr.slice(0, 6);
+  }
+  function resetPipeline() {
+    ["validate", "retrieve", "generate", "format"].forEach((s) => {
+      $("s-" + s).classList.remove("done", "active");
+      $("d-" + s).innerHTML = "";
+    });
+  }
+  function runPipeline(qlen, data) {
+    const steps = [
+      ["validate", `input length · <b>${qlen}</b> chars · ok ✓`],
+      ["retrieve", `scanned <b>${data.total_vectors ?? "…"}</b> vectors in ChromaDB
+        <div class="barline"><span class="lbl">Vector</span><div class="bars">${bars("v")}</div></div>
+        <div class="barline"><span class="lbl">BM25</span><div class="bars">${bars("b")}</div></div>
+        <div class="rrf">↳ Reciprocal Rank Fusion → top <b>${data.chunks_used}</b> chunks</div>`],
+      ["generate", `<span class="model-badge">${esc(data.model)}</span><div class="gen-bar"><i></i></div>`],
+      ["format", `<div class="cite-chips">${extractChips(data.retrieved).map((c) => `<span class="cite-chip">📄 ${esc(c)}</span>`).join("")}</div>`],
+    ];
+    steps.forEach(([id, html], i) => {
+      setTimeout(() => { $("d-" + id).innerHTML = html; $("s-" + id).classList.add("done"); }, 180 * (i + 1));
+    });
   }
 
   async function ask() {
     const q = $("q").value.trim();
     if (!q) return;
+    resetPipeline();
+    $("s-validate").classList.add("active");
     $("answer-wrap").style.display = "block";
     $("answer-body").innerHTML = '<div class="answer"><span class="spinner"></span>Thinking…</div>';
-    $("cites").innerHTML = "";
-    $("answer-meta").textContent = "";
+    $("cites").innerHTML = ""; $("answer-meta").textContent = "";
     $("ask").disabled = true;
-
     try {
       const headers = byok ? { "X-OpenAI-Key": byok } : {};
-      const body = new FormData();
-      body.append("question", q);
+      const body = new FormData(); body.append("question", q);
       const res = await fetch("/query", { method: "POST", headers, body });
       const data = await res.json();
-
       if (!res.ok) {
+        resetPipeline();
         $("answer-body").innerHTML = `<div class="err">${esc(data.detail || "Something went wrong.")}</div>`;
         if (res.status === 429) $("key-panel").style.display = "block";
         return;
       }
-
       $("answer-body").innerHTML = `<div class="answer">${renderAnswer(data.answer)}</div>`;
-      $("cites").innerHTML = (data.citations || [])
-        .map((c, i) => `<div class="cite-item"><span class="src">[${i + 1}] ${esc(c.source)} · Page ${c.page}</span>
-          <div class="txt">${esc(c.text)}</div></div>`).join("");
+      $("cites").innerHTML = (data.citations || []).map((c, i) =>
+        `<div class="cite-item"><span class="src">[${i + 1}] ${esc(c.source)} · Page ${c.page}</span><div class="txt">${esc(c.text)}</div></div>`).join("");
       const tags = [`model: ${esc(data.model)}`, `${data.chunks_used} chunks used`];
       if (data.used_own_key) tags.push("your key");
-      else if (data.free_remaining !== null && data.free_remaining !== undefined) tags.push(`${data.free_remaining} free left`);
+      else if (data.free_remaining != null) tags.push(`${data.free_remaining} free left`);
       $("answer-meta").textContent = tags.join("  ·  ");
       if (!data.used_own_key) renderKeyUI(data.free_remaining);
+      runPipeline(q.length, data);
     } catch {
+      resetPipeline();
       $("answer-body").innerHTML = `<div class="err">Network error. Please try again.</div>`;
-    } finally {
-      $("ask").disabled = false;
-    }
+    } finally { $("ask").disabled = false; }
   }
 
-  // Events
+  async function ingest() {
+    const f = $("file").files[0];
+    if (!f) { $("ingest-msg").innerHTML = `<div class="err">Choose a file first.</div>`; return; }
+    $("ingest").disabled = true;
+    $("ingest-msg").innerHTML = `<div class="ok-msg"><span class="spinner"></span>Ingesting ${esc(f.name)}…</div>`;
+    try {
+      const headers = byok ? { "X-OpenAI-Key": byok } : {};
+      const body = new FormData(); body.append("file", f);
+      const res = await fetch("/ingest", { method: "POST", headers, body });
+      const data = await res.json();
+      if (!res.ok) {
+        $("ingest-msg").innerHTML = `<div class="err">${esc(data.detail || "Upload failed.")}</div>`;
+        if (res.status === 429) $("key-panel").style.display = "block";
+      } else {
+        $("ingest-msg").innerHTML = `<div class="ok-msg">✓ ${esc(data.message)} — now ask a question about it.</div>`;
+        $("file").value = "";
+        loadStatus();
+        loadSuggestions();
+      }
+    } catch {
+      $("ingest-msg").innerHTML = `<div class="err">Network error during upload.</div>`;
+    } finally { $("ingest").disabled = false; }
+  }
+
+  // events
   $("ask").addEventListener("click", ask);
   $("q").addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) ask(); });
-  $("chips").addEventListener("click", (e) => {
-    if (e.target.classList.contains("chip")) { $("q").value = e.target.textContent.trim(); ask(); }
-  });
+  $("chips").addEventListener("click", (e) => { if (e.target.classList.contains("chip")) { $("q").value = e.target.textContent.trim(); ask(); } });
+  $("ingest").addEventListener("click", ingest);
   $("key-toggle").addEventListener("click", () => {
-    if (byok) { // currently using own key -> open panel pre-filled
-      $("key-input").value = byok;
-    }
-    const p = $("key-panel");
-    p.style.display = p.style.display === "block" ? "none" : "block";
+    if (byok) $("key-input").value = byok;
+    const p = $("key-panel"); p.style.display = p.style.display === "block" ? "none" : "block";
   });
   $("key-save").addEventListener("click", () => {
     const v = $("key-input").value.trim();
     if (!v.startsWith("sk-")) { alert("That doesn't look like an OpenAI key (should start with 'sk-')."); return; }
-    byok = v; localStorage.setItem("byok", v);
-    $("key-panel").style.display = "none"; renderKeyUI();
+    byok = v; localStorage.setItem("byok", v); $("key-panel").style.display = "none"; renderKeyUI();
   });
   $("key-clear").addEventListener("click", () => {
-    byok = ""; localStorage.removeItem("byok");
-    $("key-input").value = ""; $("key-panel").style.display = "none";
-    loadStatus();
+    byok = ""; localStorage.removeItem("byok"); $("key-input").value = ""; $("key-panel").style.display = "none"; loadStatus();
   });
 
   loadStatus();

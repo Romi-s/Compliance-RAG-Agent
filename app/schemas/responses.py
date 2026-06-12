@@ -9,6 +9,12 @@ class CitationResponse(BaseModel):
     text: str
 
 
+class RetrievedRef(BaseModel):
+    source: str
+    page: int
+    text: str = ""
+
+
 class QueryResponse(BaseModel):
     answer: str
     citations: List[CitationResponse]
@@ -16,6 +22,8 @@ class QueryResponse(BaseModel):
     chunks_used: int
     free_remaining: Optional[int] = None
     used_own_key: bool = False
+    total_vectors: Optional[int] = None
+    retrieved: List[RetrievedRef] = []
 
 
 class IngestResponse(BaseModel):

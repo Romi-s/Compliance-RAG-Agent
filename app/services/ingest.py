@@ -39,16 +39,21 @@ def embed_texts(texts: List[str], api_key: Optional[str] = None) -> List[List[fl
     return [item.embedding for item in response.data]
 
 
-def ingest_pdf(pdf_bytes: bytes, filename: str) -> dict:
-    pages = extract_text_from_pdf(pdf_bytes, max_pages=settings.max_pdf_pages)
-    return _ingest_pages(pages, filename)
+def ingest_pdf(
+    pdf_bytes: bytes,
+    filename: str,
+    api_key: Optional[str] = None,
+    max_pages: Optional[int] = None,
+) -> dict:
+    pages = extract_text_from_pdf(pdf_bytes, max_pages=max_pages or settings.max_pdf_pages)
+    return _ingest_pages(pages, filename, api_key=api_key)
 
 
-def ingest_text(text: str, filename: str) -> dict:
-    return _ingest_pages([(1, text)], filename)
+def ingest_text(text: str, filename: str, api_key: Optional[str] = None) -> dict:
+    return _ingest_pages([(1, text)], filename, api_key=api_key)
 
 
-def _ingest_pages(pages: list, filename: str) -> dict:
+def _ingest_pages(pages: list, filename: str, api_key: Optional[str] = None) -> dict:
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=settings.chunk_size,
         chunk_overlap=settings.chunk_overlap,
@@ -76,7 +81,7 @@ def _ingest_pages(pages: list, filename: str) -> dict:
     if not chunks:
         return {"filename": filename, "chunks_added": 0}
 
-    embeddings = embed_texts(chunks)
+    embeddings = embed_texts(chunks, api_key=api_key)
     collection = get_collection()
 
     batch_size = 5000

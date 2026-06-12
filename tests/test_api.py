@@ -94,9 +94,9 @@ class TestHealthEndpoint:
         assert response.json() == {"status": "ok"}
 
 
-class TestApiKeyAuth:
-    """The API-key gate protects /ingest (owner-only). /collection/stats is public,
-    read-only so the demo UI can display the chunk/document count without a key."""
+class TestIngestAccess:
+    """Uploads are public but cost-protected (per-visitor rate limit + size cap).
+    /collection/stats is public, read-only. The owner key bypasses the rate limit."""
 
     @patch("app.api.routes.settings")
     @patch("app.api.routes.get_collection")
@@ -108,34 +108,23 @@ class TestApiKeyAuth:
         response = client.get("/collection/stats")
         assert response.status_code == 200
 
-    @patch("app.api.routes.settings")
-    def test_ingest_rejects_missing_key(self, mock_settings):
-        mock_settings.api_key = "secret-key"
-        mock_settings.max_file_size_mb = 50
+    @patch("app.api.routes.ingest_text")
+    @patch("app.api.routes.invalidate_bm25_cache")
+    def test_public_upload_allowed(self, mock_cache, mock_ingest):
+        mock_ingest.return_value = {"filename": "rules.txt", "chunks_added": 2}
         response = client.post(
             "/ingest",
             files={"file": ("rules.txt", b"hi", "text/plain")},
         )
-        assert response.status_code == 401
-
-    @patch("app.api.routes.settings")
-    def test_ingest_rejects_wrong_key(self, mock_settings):
-        mock_settings.api_key = "secret-key"
-        mock_settings.max_file_size_mb = 50
-        response = client.post(
-            "/ingest",
-            files={"file": ("rules.txt", b"hi", "text/plain")},
-            headers={"X-API-Key": "wrong-key"},
-        )
-        assert response.status_code == 401
+        assert response.status_code == 200
 
     @patch("app.api.routes.settings")
     @patch("app.api.routes.ingest_text")
     @patch("app.api.routes.invalidate_bm25_cache")
-    def test_ingest_accepts_valid_key(self, mock_cache, mock_ingest, mock_settings):
+    def test_owner_key_bypasses_limits(self, mock_cache, mock_ingest, mock_settings):
         mock_settings.api_key = "secret-key"
         mock_settings.max_file_size_mb = 50
-        mock_ingest.return_value = {"filename": "rules.txt", "chunks_added": 3}
+        mock_ingest.return_value = {"filename": "rules.txt", "chunks_added": 2}
         response = client.post(
             "/ingest",
             files={"file": ("rules.txt", b"hi", "text/plain")},
