@@ -34,9 +34,9 @@
   .btn-primary:hover { filter: brightness(1.08); }
   .btn-primary:disabled { opacity: .55; cursor: default; filter: none; }
 
-  .grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px; align-items: start; }
-  @media (max-width: 940px) { .grid { grid-template-columns: 1fr; } }
-  .col { display: grid; gap: 20px; }
+  .stack { display: grid; gap: 20px; }
+  .cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+  @media (max-width: 860px) { .cols-2 { grid-template-columns: 1fr; } }
   .card { background: linear-gradient(180deg, var(--card), var(--card2)); border: 1px solid var(--border);
     border-radius: 16px; padding: 20px; }
   .eyebrow { font-size: 12px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--muted);
@@ -54,10 +54,14 @@
     padding: 9px 13px; font-size: 13px; color: #cdd5ea; transition: .15s; }
   .chip:hover { border-color: var(--accent); color: #fff; }
 
-  .kb { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 13px; color: var(--muted);
-    display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .tag { background: var(--chip); border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px; color: #cdd5ea; font-size: 12px; }
-  .tag .rm { cursor: pointer; color: var(--muted); margin-left: 6px; font-weight: 700; }
+  .kb-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+  .kb-head b { color: #cdd5ea; }
+  .kb-list { display: flex; flex-wrap: wrap; gap: 8px; max-height: 132px; overflow-y: auto; padding: 2px; }
+  .kb-list::-webkit-scrollbar { width: 8px; }
+  .kb-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 8px; }
+  .tag { background: var(--chip); border: 1px solid var(--border); border-radius: 8px; padding: 6px 11px; color: #cdd5ea; font-size: 12.5px; display: inline-flex; align-items: center; }
+  .tag.def { color: #9fb0d4; }
+  .tag .rm { cursor: pointer; color: var(--muted); margin-left: 8px; font-weight: 700; }
   .tag .rm:hover { color: #fda4af; }
 
   #answer-wrap { margin-top: 0; display: none; }
@@ -113,11 +117,15 @@
 
   /* Flow */
   .flow { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .node { background: #0b1120; border: 1px solid var(--border); border-radius: 12px; padding: 14px; text-align: center; }
-  .node .nic { font-size: 22px; }
+  .node { background: #0b1120; border: 1px solid var(--border); border-radius: 12px; padding: 14px; text-align: center;
+    transition: border-color .3s, box-shadow .3s; }
+  .node .nic { font-size: 22px; transition: filter .3s; }
   .node .nt { font-weight: 600; font-size: 13px; margin-top: 6px; }
   .node .ns { font-size: 11px; color: var(--muted); }
   .node.full { grid-column: 1 / -1; }
+  .node.lit { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 8px 22px rgba(124,108,255,.28); }
+  .node.lit .nic { filter: drop-shadow(0 0 7px var(--accent)); }
+  .flow-hint { font-size: 11.5px; color: var(--muted); margin-top: 12px; text-align: center; }
 
   /* Upload */
   .upload-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
@@ -146,9 +154,10 @@
     </div>
   </header>
 
-  <div class="grid">
-    <!-- LEFT -->
-    <div class="col">
+  <div class="stack">
+
+    <!-- Row 1 — Ask a question + Add a document side by side -->
+    <div class="cols-2">
       <section class="card">
         <div class="eyebrow"><span class="dot"></span> Ask a question</div>
         <textarea id="q" placeholder="e.g. What is the right to erasure under the GDPR?"></textarea>
@@ -170,23 +179,41 @@
           <div class="chip">When is a Data Protection Officer required?</div>
           <div class="chip">What rights do data subjects have?</div>
         </div>
-
-        <div class="kb">
-          📚 <strong style="color:#cdd5ea;">Knowledge base</strong> — ask about:
-          <span id="kb-tags"><span class="tag">loading…</span></span>
-        </div>
       </section>
 
-      <section class="card" id="answer-wrap">
-        <div class="eyebrow"><span class="dot"></span> Answer</div>
-        <div id="answer-body"></div>
-        <div class="cites" id="cites"></div>
-        <div class="meta" id="answer-meta"></div>
-      </section>
+      <!-- Right column: Add a document, with Knowledge base stacked under it -->
+      <div class="stack">
+        <section class="card">
+          <div class="eyebrow"><span class="dot"></span> Add a document</div>
+          <div class="upload-row">
+            <input type="file" id="file" accept=".pdf,.txt,.md,.csv" />
+            <button class="btn btn-primary" id="ingest">Ingest</button>
+          </div>
+          <div id="ingest-msg"></div>
+          <div class="upload-note">PDF or text, up to <span id="max-mb">5</span> MB. A few uploads per visitor — set your own key on the left to skip the limit.</div>
+        </section>
+
+        <section class="card">
+          <div class="eyebrow"><span class="dot"></span> 📚 Knowledge base</div>
+          <div class="kb-head">
+            <span id="kb-count">loading…</span>
+            <span>Uploaded docs show <b>×</b> to remove · default docs are always available</span>
+          </div>
+          <div id="kb-tags" class="kb-list"><span class="tag">loading…</span></div>
+        </section>
+      </div>
     </div>
 
-    <!-- RIGHT -->
-    <div class="col">
+    <!-- Answer (appears after asking) -->
+    <section class="card" id="answer-wrap">
+      <div class="eyebrow"><span class="dot"></span> Answer</div>
+      <div id="answer-body"></div>
+      <div class="cites" id="cites"></div>
+      <div class="meta" id="answer-meta"></div>
+    </section>
+
+    <!-- Row 2 — under the hood + Google Cloud request flow -->
+    <div class="cols-2">
       <section class="card">
         <div class="eyebrow"><span class="dot"></span> Pipeline · under the hood</div>
         <div class="steps">
@@ -228,24 +255,16 @@
       <section class="card">
         <div class="eyebrow gcp"><span class="dot"></span> Google Cloud request flow</div>
         <div class="flow">
-          <div class="node"><div class="nic">🌐</div><div class="nt">Browser</div><div class="ns">you</div></div>
-          <div class="node"><div class="nic gcp">⚙️</div><div class="nt">Cloud Run</div><div class="ns">FastAPI app</div></div>
-          <div class="node"><div class="nic">🗂️</div><div class="nt">ChromaDB</div><div class="ns">vector search</div></div>
-          <div class="node"><div class="nic">🔐</div><div class="nt gcp">Secret Manager</div><div class="ns">API keys</div></div>
-          <div class="node full"><div class="nic">🧠</div><div class="nt">OpenAI</div><div class="ns">embeddings + LLM</div></div>
+          <div class="node" id="n-browser"><div class="nic">🌐</div><div class="nt">Browser</div><div class="ns">you</div></div>
+          <div class="node" id="n-run"><div class="nic gcp">⚙️</div><div class="nt">Cloud Run</div><div class="ns">FastAPI app</div></div>
+          <div class="node" id="n-chroma"><div class="nic">🗂️</div><div class="nt">ChromaDB</div><div class="ns">vector search</div></div>
+          <div class="node" id="n-secret"><div class="nic">🔐</div><div class="nt gcp">Secret Manager</div><div class="ns">API keys</div></div>
+          <div class="node full" id="n-openai"><div class="nic">🧠</div><div class="nt">OpenAI</div><div class="ns">embeddings + LLM</div></div>
         </div>
-      </section>
-
-      <section class="card">
-        <div class="eyebrow"><span class="dot"></span> Add a document</div>
-        <div class="upload-row">
-          <input type="file" id="file" accept=".pdf,.txt,.md,.csv" />
-          <button class="btn btn-primary" id="ingest">Ingest</button>
-        </div>
-        <div id="ingest-msg"></div>
-        <div class="upload-note">PDF or text, up to <span id="max-mb">5</span> MB. A few uploads per visitor — set your own key above to skip the limit.</div>
+        <div class="flow-hint">Nodes light up in order as your question travels the stack.</div>
       </section>
     </div>
+
   </div>
 
   <div class="footer">Built with FastAPI · LangGraph · ChromaDB · OpenAI — deployed on Google Cloud Run</div>
@@ -268,10 +287,13 @@
   function renderKbTags(sources, defaults) {
     const def = new Set(defaults || []);
     const tags = (sources && sources.length) ? sources : ["demo corpus"];
-    $("kb-tags").innerHTML = tags.slice(0, 6).map((s) => {
-      const removable = s !== "demo corpus" && !def.has(s);
+    $("kb-tags").innerHTML = tags.map((s) => {
+      const isDefault = def.has(s);
+      const removable = s !== "demo corpus" && !isDefault;
       const x = removable ? ` <span class="rm" data-src="${escAttr(s)}" title="Remove">×</span>` : "";
-      return `<span class="tag">${esc(s)}${x}</span>`;
+      const cls = isDefault ? "tag def" : "tag";
+      const dot = isDefault ? "📌 " : "📄 ";
+      return `<span class="${cls}">${dot}${esc(s)}${x}</span>`;
     }).join(" ");
   }
 
@@ -287,7 +309,9 @@
 
   function renderStats(s) {
     const docs = (s.sources || []).length;
-    $("status-text").textContent = `${s.total_chunks} chunks · ${docs} document(s)`;
+    const txt = `${s.total_chunks} chunks · ${docs} document(s)`;
+    $("status-text").textContent = txt;
+    $("kb-count").innerHTML = `<b>${s.total_chunks}</b> chunks across <b>${docs}</b> document(s)`;
     renderKbTags(s.sources, s.default_sources);
   }
 
@@ -331,11 +355,18 @@
     if (!arr.length) arr = (retrieved || []).slice(0, 4).map((r) => `${r.source} · p${r.page}`);
     return arr.slice(0, 6);
   }
+  const FLOW_NODES = ["browser", "run", "chroma", "secret", "openai"];
+  function resetFlow() { FLOW_NODES.forEach((n) => $("n-" + n).classList.remove("lit")); }
+  function lightFlow() {
+    // Light the architecture nodes in order, as the request travels the stack.
+    FLOW_NODES.forEach((n, i) => setTimeout(() => $("n-" + n).classList.add("lit"), 200 * (i + 1)));
+  }
   function resetPipeline() {
     ["validate", "retrieve", "generate", "format"].forEach((s) => {
       $("s-" + s).classList.remove("done", "active");
       $("d-" + s).innerHTML = "";
     });
+    resetFlow();
   }
   function runPipeline(qlen, data) {
     const steps = [
@@ -350,6 +381,7 @@
     steps.forEach(([id, html], i) => {
       setTimeout(() => { $("d-" + id).innerHTML = html; $("s-" + id).classList.add("done"); }, 180 * (i + 1));
     });
+    lightFlow();
   }
 
   async function ask() {
