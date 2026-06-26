@@ -1,0 +1,36 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:        # lets you trigger a deploy manually from the Actions tab
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write        # REQUIRED for keyless auth (OIDC) to GCP
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud (keyless / WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/457576143072/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+          service_account: github-actions@compliance-rag-499207.iam.gserviceaccount.com
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy compliance-rag-agent \
+            --source . \
+            --project compliance-rag-499207 \
+            --region europe-west1 \
+            --allow-unauthenticated \
+            --set-secrets=OPENAI_API_KEY=openai-api-key:latest \
+            --memory 1Gi --cpu 1 --min-instances 0 --max-instances 3 --timeout 300

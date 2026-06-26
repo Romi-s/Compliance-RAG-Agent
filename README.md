@@ -1,8 +1,24 @@
 # Compliance RAG Agent
 
-A production-style backend service that answers natural-language questions about compliance and regulatory documents using Retrieval-Augmented Generation. Upload PDFs or text files, and the system chunks, embeds, and indexes them into a vector store, then retrieves the most relevant passages at query time using **hybrid search** (vector similarity + BM25 keyword matching) merged via **Reciprocal Rank Fusion**, and generates grounded answers with **source citations**.
+A full-stack, production-style **Retrieval-Augmented Generation** app that answers natural-language questions about compliance and regulatory documents — with **source citations**. It ships with a polished web UI, a **LangGraph** agentic pipeline, **hybrid search** (vector similarity + BM25, merged with Reciprocal Rank Fusion), and is deployed to **Google Cloud Run** with **keyless GitHub Actions CI/CD**.
 
-Built with a LangGraph agentic pipeline -- each stage is an independent node with conditional error-abort edges, making the system testable, resilient, and extensible. Dockerized and deployable to **Google Cloud Run** with CI/CD via Cloud Build.
+> **Live demo:** `https://compliance-rag-agent-457576143072.europe-west1.run.app/` &nbsp;·&nbsp;
+
+The demo is **public and cost-safe**: every visitor gets a few free questions on a server key (rate-limited, with a hard global cap), or can paste their **own OpenAI key** for unlimited use — and the server key never reaches the browser.
+
+---
+
+## Features
+
+- **Hybrid retrieval** — semantic (ChromaDB cosine) + lexical (BM25) search merged with **Reciprocal Rank Fusion** for better recall than either alone.
+- **Grounded answers with citations** — every answer references the exact document and page it drew from (e.g. `[1] gdpr.pdf, Page 12`).
+- **Agentic pipeline** — a LangGraph `StateGraph` (validate → retrieve → generate → format) with conditional error-abort edges at each stage.
+- **Built-in web UI** (served by FastAPI, same-origin) — ask box, **dynamic suggested questions generated from the indexed corpus**, a **live "under the hood" pipeline view** (vector/BM25 bars, RRF, model, citation chips), document upload, and a Google Cloud request-flow panel.
+- **Public-demo cost controls** — per-visitor rate limits (questions + uploads), a global daily cap, small upload size/page caps, and optional **bring-your-own-key**. See [Cost & security](#cost--security).
+- **Self-seeding corpus** — a curated GDPR knowledge base auto-loads on startup, so the demo always works out of the box.
+- **Cloud-native** — Dockerized, serverless on Cloud Run, secrets in Secret Manager, **CI/CD via GitHub Actions with Workload Identity Federation (no stored keys)**.
+
+---
 
 ## Architecture
 
@@ -15,236 +31,144 @@ Built with a LangGraph agentic pipeline -- each stage is an independent node wit
                           ┌──────────────────────────────────────────────┐
                           │         Query Pipeline (LangGraph)           │
   Question    ───────────►│  Validate ─► Retrieve ─► Generate ─► Format │
-                          │               (hybrid)    (GPT-4o)   (cite) │
+                          │               (hybrid)   (gpt-4o-mini) (cite)│
                           └──────────────────────────────────────────────┘
-                                          │
-                                   ┌──────┴──────┐
-                                   │  Hybrid     │
-                                   │  Retrieval  │
-                                   ├─────────────┤
-                                   │ Vector      │  ChromaDB cosine
-                                   │ BM25        │  rank-bm25
-                                   │ Merge (RRF) │  Reciprocal Rank Fusion
+                                   ┌─────────────┐
+                                   │  Hybrid     │  Vector (ChromaDB cosine)
+                                   │  Retrieval  │  BM25   (rank-bm25)
+                                   │  Merge (RRF)│  Reciprocal Rank Fusion
                                    └─────────────┘
 ```
 
-### Cloud Deployment
+### Deployment & CI/CD
 
 ```
-┌─────────────┐     ┌──────────────────────────┐     ┌──────────────────────┐
-│  Cloud Build │────►│  Artifact Registry       │────►│  Cloud Run (app)     │
-│  (CI/CD)    │     │  (Docker image)          │     │  FastAPI + LangGraph │
-└─────────────┘     └──────────────────────────┘     └──────────┬───────────┘
-                                                                │
-                    ┌──────────────────────────┐                │
-                    │  Secret Manager          │────────────────┤
-                    │  OPENAI_API_KEY          │                │
-                    │  API_KEY, CHROMA_TOKEN   │                │
-                    └──────────────────────────┘                │
-                                                                │
-                    ┌──────────────────────────┐                │
-                    │  Cloud Run (chromadb)    │◄───────────────┘
-                    │  Persistent vector store │
-                    └──────────────────────────┘
+  git push main ─► GitHub Actions ─► gcloud run deploy --source
+                   (keyless / WIF)          │
+                                            ▼
+                   ┌──────────────────────────────────────────┐
+                   │            Cloud Run service             │
+                   │   FastAPI + LangGraph + UI + ChromaDB    │
+                   └───────────────┬──────────────────────────┘
+                                   │ reads at runtime
+                   ┌───────────────┴───────────┐   ┌──────────────┐
+                   │  Secret Manager           │   │  OpenAI API  │
+                   │  OPENAI_API_KEY           │   │  LLM + embed │
+                   └───────────────────────────┘   └──────────────┘
 ```
 
-## Features
+ChromaDB runs **embedded** in the app (auto-seeded on boot). This keeps the demo to a single service. *(Vector data is per-instance and resets on cold start — fine for a demo; a separate persistent ChromaDB service is the next step for shared/durable storage.)*
 
-- **Hybrid search** -- combines semantic (vector) and lexical (BM25) retrieval, merged with Reciprocal Rank Fusion for better recall than either method alone
-- **Source citations** -- every answer references the exact document and page it drew from (e.g., `[1] gdpr.pdf, Page 3`)
-- **Agentic pipeline** -- LangGraph StateGraph with 4 nodes and conditional error-abort at every stage
-- **PDF + text ingestion** -- extracts text from PDFs via PyMuPDF, chunks with LangChain's RecursiveCharacterTextSplitter
-- **Persistent vector store** -- ChromaDB with cosine similarity; local PersistentClient or remote HTTP client
-- **Production-grade API** -- FastAPI with magic-byte MIME detection, file-size limits, Pydantic v2 response models, API key authentication, global exception handling
-- **Cloud-native deployment** -- Dockerized, Cloud Run serverless, Cloud Build CI/CD, Secret Manager integration
+---
 
 ## Endpoints
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| `POST` | `/ingest` | API key | Upload a PDF or text file to chunk, embed, and index |
-| `POST` | `/query` | API key | Ask a question; returns answer + citations |
-| `GET` | `/collection/stats` | API key | View total chunks and ingested source filenames |
-| `GET` | `/health` | None | Health check for Cloud Run |
-| `GET` | `/docs` | None | Interactive OpenAPI documentation (auto-generated) |
+| `GET`  | `/` | None | The web UI |
+| `POST` | `/query` | Public (rate-limited) | Ask a question; returns answer + citations + pipeline telemetry |
+| `POST` | `/ingest` | Public (rate-limited) | Upload a small PDF/text file to index |
+| `GET`  | `/collection/stats` | None | Chunk count + indexed document names |
+| `GET`  | `/api/suggestions` | None | Suggested questions generated from the current corpus |
+| `GET`  | `/api/limits` | None | Free questions/uploads remaining for this visitor |
+| `GET`  | `/health` | None | Liveness check for Cloud Run |
+| `GET`  | `/docs` | None | Auto-generated OpenAPI docs |
 
-## Quick Start
+Send `X-OpenAI-Key: sk-...` on `/query` or `/ingest` to use your own key (bypasses the rate limit). An optional owner `X-API-Key` bypasses all limits.
 
-### Option 1: Local (without Docker)
+---
+
+## Cost & security
+
+The demo is public, so the OpenAI key is protected on **five layers**:
+
+1. **Key stays server-side** — injected from Secret Manager into the container; never sent to the browser.
+2. **OpenAI monthly hard cap** — set in the OpenAI dashboard; the ultimate ceiling on spend.
+3. **Per-visitor rate limits** — free questions/uploads per IP per day (`free_queries_per_day`, `free_uploads_per_day`).
+4. **Global daily cap** — a hard ceiling across all visitors (`global_daily_cap`).
+5. **Upload caps + bring-your-own-key** — small size/page limits; visitors can supply their own key for unlimited use.
+
+Generation uses **gpt-4o-mini** by default (cheap) with **text-embedding-3-small** for vectors.
+
+---
+
+## Quick start (local)
 
 ```bash
 cd compliance-rag-agent
-
 python -m venv .venv
-.venv\Scripts\activate        # Windows
-# source .venv/bin/activate   # Linux/macOS
+.venv\Scripts\activate          # Windows  (source .venv/bin/activate on macOS/Linux)
 pip install -r requirements.txt
 
-cp .env.example .env
-# Edit .env and add your OPENAI_API_KEY
-
-uvicorn app.main:app --reload
+copy .env.example .env          # then put your OpenAI key in .env
+uvicorn app.main:app --reload --port 8080
 ```
 
-### Option 2: Docker Compose (app + ChromaDB)
-
-```bash
-cp .env.example .env
-# Edit .env and add your OPENAI_API_KEY
-
-docker compose up --build
-```
-
-This starts both the app (port 8080) and a ChromaDB server (port 8000). The app auto-connects to ChromaDB via the `CHROMA_HOST` env var.
-
-## Usage
-
-**1. Ingest a document:**
-```bash
-curl -X POST http://localhost:8080/ingest \
-  -H "X-API-Key: your-key" \
-  -F "file=@gdpr_regulation.pdf"
-```
-```json
-{
-  "filename": "gdpr_regulation.pdf",
-  "chunks_added": 247,
-  "message": "Ingested 247 chunks from gdpr_regulation.pdf"
-}
-```
-
-**2. Ask a question:**
-```bash
-curl -X POST http://localhost:8080/query \
-  -H "X-API-Key: your-key" \
-  -F "question=What are the data subject rights under GDPR?"
-```
-```json
-{
-  "answer": "Under GDPR, data subjects have several key rights including the right to access [1], the right to rectification [2], and the right to erasure ('right to be forgotten') [3]...",
-  "citations": [
-    {"source": "gdpr_regulation.pdf", "page": 12, "text": "The data subject shall have the right to obtain from the controller..."},
-    {"source": "gdpr_regulation.pdf", "page": 14, "text": "The data subject shall have the right to obtain the rectification..."},
-    {"source": "gdpr_regulation.pdf", "page": 15, "text": "The data subject shall have the right to obtain the erasure..."}
-  ],
-  "model": "gpt-4o",
-  "chunks_used": 5
-}
-```
-
-**3. Check collection stats:**
-```bash
-curl http://localhost:8080/collection/stats \
-  -H "X-API-Key: your-key"
-```
-
-## Cloud Deployment (Google Cloud Run)
-
-### Prerequisites
-
-- GCP project with billing enabled
-- `gcloud` CLI authenticated
-- APIs enabled: Cloud Run, Cloud Build, Artifact Registry, Secret Manager
-
-### 1. Create secrets in Secret Manager
-
-```bash
-echo -n "sk-your-openai-key" | gcloud secrets create openai-api-key --data-file=-
-echo -n "your-app-api-key"   | gcloud secrets create app-api-key --data-file=-
-echo -n "your-chroma-token"  | gcloud secrets create chroma-token --data-file=-
-```
-
-### 2. Create Artifact Registry repository
-
-```bash
-gcloud artifacts repositories create compliance-rag \
-  --repository-format=docker \
-  --location=europe-west1
-```
-
-### 3. Deploy ChromaDB as a Cloud Run service (one-time)
-
-```bash
-gcloud run deploy chromadb \
-  --image=chromadb/chroma:latest \
-  --region=europe-west1 \
-  --platform=managed \
-  --no-allow-unauthenticated \
-  --port=8000 \
-  --memory=512Mi \
-  --set-env-vars="ANONYMIZED_TELEMETRY=false,CHROMA_SERVER_AUTHN_PROVIDER=chromadb.auth.token_authn.TokenAuthenticationServerProvider" \
-  --set-secrets="CHROMA_SERVER_AUTHN_CREDENTIALS=chroma-token:latest"
-```
-
-Note the service URL (e.g., `chromadb-xxxxx-ew.a.run.app`).
-
-### 4. Deploy the app via Cloud Build
-
-Update `_CHROMA_HOST` in `cloudbuild.yaml` with the ChromaDB service host, then:
-
-```bash
-gcloud builds submit --config=cloudbuild.yaml
-```
-
-Or set up a Cloud Build trigger for automatic deployment on git push.
-
-### 5. Grant service-to-service auth
-
-```bash
-# Allow the app's service account to invoke the ChromaDB service
-gcloud run services add-iam-policy-binding chromadb \
-  --region=europe-west1 \
-  --member="serviceAccount:YOUR_PROJECT_NUMBER-compute@developer.gserviceaccount.com" \
-  --role="roles/run.invoker"
-```
-
-## Project Structure
-
-```
-compliance-rag-agent/
-├── app/
-│   ├── main.py                 # FastAPI app factory + /health endpoint
-│   ├── config.py               # pydantic-settings (OpenAI, ChromaDB, auth)
-│   ├── agent/
-│   │   ├── state.py            # TypedDict state schema
-│   │   ├── nodes.py            # Pipeline nodes: validate, retrieve, generate, format
-│   │   └── graph.py            # LangGraph StateGraph with conditional edges
-│   ├── api/
-│   │   └── routes.py           # FastAPI endpoints + API key auth
-│   ├── services/
-│   │   ├── ingest.py           # Chunking, embedding, ChromaDB (local or HTTP)
-│   │   ├── retriever.py        # Hybrid search (vector + BM25 + RRF)
-│   │   └── text_extractor.py   # PDF text extraction via PyMuPDF
-│   └── schemas/
-│       └── responses.py        # Pydantic v2 response models
-├── tests/                      # 25 tests (unit + integration)
-├── Dockerfile                  # Python 3.12-slim, Cloud Run PORT convention
-├── docker-compose.yml          # Local dev: app + ChromaDB
-├── cloudbuild.yaml             # CI/CD: build, push, deploy to Cloud Run
-├── requirements.txt
-├── requirements-dev.txt
-├── .env.example
-├── .dockerignore
-└── .gitignore
-```
+Open **http://localhost:8080**. On first load it embeds the bundled GDPR corpus (a few seconds, shown as "warming up…"), then you can ask questions and upload documents.
 
 ## Configuration
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `OPENAI_API_KEY` | -- | Required. OpenAI API key |
-| `OPENAI_MODEL` | `gpt-4o` | LLM for answer generation |
-| `EMBEDDING_MODEL` | `text-embedding-3-small` | Embedding model for vector search |
-| `CHROMA_HOST` | -- | ChromaDB server host (omit for local PersistentClient) |
-| `CHROMA_PORT` | `8000` | ChromaDB server port |
-| `CHROMA_SSL` | `false` | Use HTTPS for ChromaDB connection |
-| `CHROMA_TOKEN` | -- | Bearer token for ChromaDB authentication |
-| `API_KEY` | -- | API key for X-API-Key header auth (omit to disable) |
-| `CHUNK_SIZE` | `512` | Characters per chunk |
-| `CHUNK_OVERLAP` | `64` | Overlap between chunks |
-| `RETRIEVAL_TOP_K` | `10` | Candidates retrieved per search method |
-| `FINAL_TOP_K` | `5` | Chunks sent to LLM after RRF merge |
-| `MAX_FILE_SIZE_MB` | `50` | Upload size limit |
+| `OPENAI_API_KEY` | — | **Required.** OpenAI key (from `.env` locally, Secret Manager in prod) |
+| `OPENAI_MODEL` | `gpt-4o-mini` | LLM for answer generation |
+| `EMBEDDING_MODEL` | `text-embedding-3-small` | Embedding model |
+| `CHROMA_PERSIST_DIR` | `./chroma_data` | Where the embedded vector store writes |
+| `CHROMA_HOST` | — | Set to use a remote ChromaDB HTTP server instead of embedded |
+| `API_KEY` | — | Optional owner key; bypasses demo limits |
+| `FREE_QUERIES_PER_DAY` | `5` | Free questions per visitor (per IP) per day |
+| `FREE_UPLOADS_PER_DAY` | `3` | Free uploads per visitor (per IP) per day |
+| `GLOBAL_DAILY_CAP` | `300` | Hard ceiling on questions+uploads across all visitors per day |
+| `MAX_UPLOAD_MB` | `5` | Size cap for public demo uploads |
+| `MAX_DEMO_PDF_PAGES` | `30` | Page cap for public demo PDF uploads |
+| `CHUNK_SIZE` / `CHUNK_OVERLAP` | `512` / `64` | Chunking parameters |
+| `RETRIEVAL_TOP_K` / `FINAL_TOP_K` | `10` / `5` | Candidates per method / chunks sent to the LLM |
+
+---
+
+## Deployment (Google Cloud Run)
+
+### One-command deploy
+```bash
+echo -n "sk-your-key" | gcloud secrets create openai-api-key --data-file=-
+
+gcloud run deploy compliance-rag-agent \
+  --source . --region europe-west1 --allow-unauthenticated \
+  --set-secrets=OPENAI_API_KEY=openai-api-key:latest \
+  --memory 1Gi --cpu 1 --min-instances 0 --max-instances 3 --timeout 300
+```
+
+### Continuous deployment (GitHub Actions, keyless)
+[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) deploys on every push to `main`. It authenticates to GCP via **Workload Identity Federation** — GitHub uses a short-lived OIDC token to impersonate a deploy service account, so **no service-account key is ever stored** in the repo.
+
+> **Note:** `cloudbuild.yaml` in this repo is an *alternative* GCP-native pipeline (Cloud Build) kept for reference; the active CI/CD is the GitHub Actions workflow above.
+
+---
+
+## Project structure
+
+```
+compliance-rag-agent/
+├── app/
+│   ├── main.py                 # FastAPI app factory, UI mount, startup seeding
+│   ├── config.py               # pydantic-settings (model, ChromaDB, demo limits)
+│   ├── agent/                  # LangGraph: state, nodes, graph
+│   ├── api/routes.py           # endpoints, rate limiting, bring-your-own-key
+│   ├── services/
+│   │   ├── ingest.py           # chunk, embed, ChromaDB upsert
+│   │   ├── retriever.py        # hybrid search (vector + BM25 + RRF)
+│   │   ├── ratelimit.py        # per-visitor + global cost controls
+│   │   ├── seed.py             # auto-seed the demo corpus
+│   │   ├── suggestions.py      # corpus-aware suggested questions
+│   │   └── text_extractor.py   # PDF text extraction (PyMuPDF)
+│   ├── schemas/responses.py    # Pydantic v2 response models
+│   ├── static/index.html       # the web UI
+│   └── data/gdpr_excerpts.txt  # bundled demo knowledge base
+├── tests/                      # 25 tests (hermetic — no network/keys)
+├── .github/workflows/deploy.yml# GitHub Actions CI/CD (WIF)
+├── Dockerfile
+└── requirements.txt
+```
 
 ## Testing
 
@@ -253,8 +177,8 @@ pip install -r requirements-dev.txt
 pytest tests/ -v
 ```
 
-25 tests covering node logic, API endpoints, API key auth, health check, and retriever utilities -- all run without API keys or external services.
+25 hermetic tests (node logic, API endpoints, rate-limit/upload access, citation extraction, tokenization) — run with no API keys or external services.
 
-## Tech Stack
+## Tech stack
 
-Python, FastAPI, LangGraph, LangChain, OpenAI API, ChromaDB, BM25 (rank-bm25), Reciprocal Rank Fusion, PyMuPDF, Pydantic v2, pydantic-settings, Uvicorn, pytest, Docker, Docker Compose, Google Cloud Run, Google Cloud Build, Google Artifact Registry, Google Secret Manager
+Python · FastAPI · LangGraph · LangChain · OpenAI (gpt-4o-mini, text-embedding-3-small) · ChromaDB · rank-bm25 · Reciprocal Rank Fusion · PyMuPDF · Pydantic v2 · Uvicorn · HTML/CSS/JS · Docker · Google Cloud Run · Secret Manager · GitHub Actions · Workload Identity Federation (OIDC) · pytest

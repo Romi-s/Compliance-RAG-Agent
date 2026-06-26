@@ -20,7 +20,7 @@ from app.services.ratelimit import (
     remaining_uploads,
 )
 from app.services.retriever import invalidate_bm25_cache
-from app.services.seed import ensure_seeded
+from app.services.seed import default_sources, ensure_seeded
 from app.services.suggestions import get_suggestions
 
 
@@ -141,7 +141,19 @@ async def collection_stats():
         all_meta = collection.get(include=["metadatas"])
         sources = sorted({m["source"] for m in all_meta["metadatas"]})
 
-    return CollectionStatsResponse(total_chunks=count, sources=sources)
+    return CollectionStatsResponse(
+        total_chunks=count, sources=sources, default_sources=default_sources()
+    )
+
+
+@router.post("/collection/remove")
+async def remove_document(source: str = Form(...)):
+    """Remove all chunks for an uploaded document. Bundled default docs are protected."""
+    if source in default_sources():
+        raise HTTPException(status_code=400, detail="Default documents can't be removed.")
+    get_collection().delete(where={"source": source})
+    invalidate_bm25_cache()
+    return {"removed": source}
 
 
 @router.post("/ingest", response_model=IngestResponse)

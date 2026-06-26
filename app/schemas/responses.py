@@ -35,3 +35,4 @@ class IngestResponse(BaseModel):
 class CollectionStatsResponse(BaseModel):
     total_chunks: int
     sources: List[str]
+    default_sources: List[str] = []

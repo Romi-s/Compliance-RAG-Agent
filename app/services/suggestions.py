@@ -11,6 +11,7 @@ from typing import List, Optional
 
 from app.config import settings
 from app.services.ingest import get_collection
+from app.services.seed import default_sources
 
 _DEFAULTS = [
     "What is the right to erasure?",
@@ -24,14 +25,43 @@ _cache_sig: Optional[int] = None
 _cache_qs: List[str] = list(_DEFAULTS)
 
 
+def _sample_corpus(collection, max_sources: int = 6, per_source: int = 4, char_limit: int = 6000) -> str:
+    """Pull a few chunks from EACH indexed document so suggestions reflect the whole
+    corpus (especially freshly uploaded files) instead of just the first chunks."""
+    try:
+        meta = collection.get(include=["metadatas"])
+    except Exception:
+        meta = {"metadatas": []}
+
+    sources: List[str] = []
+    for m in meta.get("metadatas") or []:
+        src = (m or {}).get("source")
+        if src and src not in sources:
+            sources.append(src)
+    # Uploaded docs first, bundled default docs last, so uploads drive the questions.
+    defaults = set(default_sources())
+    sources.sort(key=lambda s: s in defaults)
+
+    if not sources:
+        data = collection.get(include=["documents"], limit=12)
+        return "\n\n".join(data.get("documents") or [])[:char_limit]
+
+    parts: List[str] = []
+    for src in sources[:max_sources]:
+        try:
+            d = collection.get(where={"source": src}, include=["documents"], limit=per_source)
+            parts.extend(d.get("documents") or [])
+        except Exception:
+            continue
+    return "\n\n".join(parts)[:char_limit]
+
+
 def _generate(collection, api_key: Optional[str]) -> Optional[List[str]]:
     key = api_key or settings.openai_api_key
     if not key:
         return None
     try:
-        data = collection.get(include=["documents"], limit=20)
-        docs = data.get("documents") or []
-        sample = "\n\n".join(docs[:12])[:6000]
+        sample = _sample_corpus(collection)
         if not sample.strip():
             return None
 

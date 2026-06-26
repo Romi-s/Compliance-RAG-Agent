@@ -57,6 +57,8 @@
   .kb { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 13px; color: var(--muted);
     display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .tag { background: var(--chip); border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px; color: #cdd5ea; font-size: 12px; }
+  .tag .rm { cursor: pointer; color: var(--muted); margin-left: 6px; font-weight: 700; }
+  .tag .rm:hover { color: #fda4af; }
 
   #answer-wrap { margin-top: 0; display: none; }
   .answer { background: #0b1120; border: 1px solid var(--border); border-radius: 12px; padding: 16px; line-height: 1.6; white-space: pre-wrap; }
@@ -254,6 +256,7 @@
   let byok = localStorage.getItem("byok") || "";
 
   const esc = (s) => (s || "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  const escAttr = (s) => esc(s).replace(/"/g, "&quot;");
   const renderAnswer = (t) => esc(t).replace(/\[(\d+)\]/g, '<b class="cite">[$1]</b>');
 
   function renderKeyUI(freeRemaining) {
@@ -262,15 +265,30 @@
     else $("key-label").textContent = "Use your own key";
   }
 
-  function renderKbTags(sources) {
+  function renderKbTags(sources, defaults) {
+    const def = new Set(defaults || []);
     const tags = (sources && sources.length) ? sources : ["demo corpus"];
-    $("kb-tags").innerHTML = tags.slice(0, 4).map((s) => `<span class="tag">${esc(s)}</span>`).join(" ");
+    $("kb-tags").innerHTML = tags.slice(0, 6).map((s) => {
+      const removable = s !== "demo corpus" && !def.has(s);
+      const x = removable ? ` <span class="rm" data-src="${escAttr(s)}" title="Remove">×</span>` : "";
+      return `<span class="tag">${esc(s)}${x}</span>`;
+    }).join(" ");
+  }
+
+  async function removeDoc(src) {
+    if (!confirm(`Remove "${src}" from the knowledge base?`)) return;
+    try {
+      const body = new FormData(); body.append("source", src);
+      const res = await fetch("/collection/remove", { method: "POST", body });
+      if (res.ok) { loadStatus(); loadSuggestions(); }
+      else { const d = await res.json().catch(() => ({})); alert(d.detail || "Could not remove."); }
+    } catch { alert("Network error removing document."); }
   }
 
   function renderStats(s) {
     const docs = (s.sources || []).length;
     $("status-text").textContent = `${s.total_chunks} chunks · ${docs} document(s)`;
-    renderKbTags(s.sources);
+    renderKbTags(s.sources, s.default_sources);
   }
 
   async function loadStatus() {
@@ -398,6 +416,9 @@
   $("q").addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) ask(); });
   $("chips").addEventListener("click", (e) => { if (e.target.classList.contains("chip")) { $("q").value = e.target.textContent.trim(); ask(); } });
   $("ingest").addEventListener("click", ingest);
+  $("kb-tags").addEventListener("click", (e) => {
+    if (e.target.classList.contains("rm")) removeDoc(e.target.dataset.src);
+  });
   $("key-toggle").addEventListener("click", () => {
     if (byok) $("key-input").value = byok;
     const p = $("key-panel"); p.style.display = p.style.display === "block" ? "none" : "block";
