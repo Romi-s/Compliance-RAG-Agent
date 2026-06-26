@@ -2,7 +2,7 @@
 
 A full-stack, production-style **Retrieval-Augmented Generation** app that answers natural-language questions about compliance and regulatory documents — with **source citations**. It ships with a polished web UI, a **LangGraph** agentic pipeline, **hybrid search** (vector similarity + BM25, merged with Reciprocal Rank Fusion), and is deployed to **Google Cloud Run** with **keyless GitHub Actions CI/CD**.
 
-> **Live demo:** `https://compliance-rag-agent-457576143072.europe-west1.run.app/` &nbsp;·&nbsp;
+> **Live demo:** `https://compliance-rag-agent-kwxekadtlq-ew.a.run.app/` &nbsp;·&nbsp;
 
 The demo is **public and cost-safe**: every visitor gets a few free questions on a server key (rate-limited, with a hard global cap), or can paste their **own OpenAI key** for unlimited use — and the server key never reaches the browser.
 
