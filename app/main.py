@@ -2,9 +2,10 @@ import os
 import threading
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 from app.api.routes import router
 from app.services.seed import ensure_seeded
@@ -35,6 +36,12 @@ def create_app() -> FastAPI:
     @app.get("/health")
     async def health():
         return {"status": "ok"}
+
+    @app.get("/metrics")
+    async def metrics():
+        """Prometheus exposition endpoint: retrieval/generation/query latency and
+        the top-relevance distribution. Point a Prometheus scraper here."""
+        return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
     @app.exception_handler(Exception)
     async def generic_handler(request: Request, exc: Exception):

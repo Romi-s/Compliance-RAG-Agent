@@ -1,4 +1,5 @@
 import re
+import time
 
 from app.agent.state import Citation, QAState
 from app.config import settings
@@ -17,10 +18,12 @@ def retrieve(state: QAState) -> dict:
     if state.get("error"):
         return {}
     try:
+        t0 = time.perf_counter()
         chunks = hybrid_retrieve(state["question"], api_key=state.get("api_key"))
+        retrieval_ms = (time.perf_counter() - t0) * 1000
         if not chunks:
             return {"error": "No relevant documents found. Please ingest documents first."}
-        return {"retrieved_chunks": chunks}
+        return {"retrieved_chunks": chunks, "retrieval_ms": retrieval_ms}
     except Exception as exc:
         return {"error": f"Retrieval failed: {exc}"}
 
@@ -29,9 +32,14 @@ def generate(state: QAState) -> dict:
     if state.get("error"):
         return {}
     try:
+        from langsmith.wrappers import wrap_openai
         from openai import OpenAI
 
-        client = OpenAI(api_key=state.get("api_key") or settings.require_api_key())
+        # wrap_openai adds a child LLM span (model, token usage, cost, latency) to
+        # the active trace. It's a no-op when LANGSMITH_TRACING isn't enabled.
+        client = wrap_openai(
+            OpenAI(api_key=state.get("api_key") or settings.require_api_key())
+        )
 
         context_parts = []
         for i, chunk in enumerate(state["retrieved_chunks"], 1):
@@ -49,6 +57,7 @@ def generate(state: QAState) -> dict:
         )
         user_prompt = f"Document excerpts:\n\n{context}\n\nQuestion: {state['question']}"
 
+        t0 = time.perf_counter()
         response = client.chat.completions.create(
             model=settings.openai_model,
             messages=[
@@ -57,7 +66,8 @@ def generate(state: QAState) -> dict:
             ],
             max_tokens=1024,
         )
-        return {"answer": response.choices[0].message.content}
+        generation_ms = (time.perf_counter() - t0) * 1000
+        return {"answer": response.choices[0].message.content, "generation_ms": generation_ms}
     except Exception as exc:
         return {"error": f"Generation failed: {exc}"}
 

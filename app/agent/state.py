@@ -24,3 +24,6 @@ class QAState(TypedDict):
     error: Optional[str]
     # Per-request OpenAI key (bring-your-own-key). None -> use the server's key.
     api_key: Optional[str]
+    # Per-stage latency (milliseconds), populated by the nodes for /metrics.
+    retrieval_ms: Optional[float]
+    generation_ms: Optional[float]

@@ -1,0 +1,45 @@
+[
+  {
+    "id": "breach_notification_window",
+    "category": "breach-notification",
+    "question": "Within what timeframe must a data controller notify the supervisory authority of a personal data breach?",
+    "reference": "The controller must notify the competent supervisory authority without undue delay and, where feasible, no later than 72 hours after becoming aware of the breach, unless the breach is unlikely to result in a risk to the rights and freedoms of individuals."
+  },
+  {
+    "id": "fine_tiers",
+    "category": "penalties",
+    "question": "What are the maximum administrative fines under the GDPR?",
+    "reference": "GDPR sets two tiers of fines. The lower tier is up to 10 million EUR, or 2% of total worldwide annual turnover, whichever is higher. The higher tier is up to 20 million EUR, or 4% of total worldwide annual turnover, whichever is higher."
+  },
+  {
+    "id": "dpo_required",
+    "category": "governance",
+    "question": "When is an organisation required to appoint a Data Protection Officer (DPO)?",
+    "reference": "A DPO must be designated when processing is carried out by a public authority or body (except courts acting in their judicial capacity); when the core activities require regular and systematic monitoring of data subjects on a large scale; or when the core activities consist of large-scale processing of special categories of data or of personal data relating to criminal convictions and offences."
+  },
+  {
+    "id": "right_to_be_forgotten",
+    "category": "data-subject-rights",
+    "question": "What is the 'right to be forgotten' and is it absolute?",
+    "reference": "It is the right to erasure under Article 17: a data subject can obtain erasure of their personal data without undue delay on certain grounds, such as the data no longer being necessary, withdrawal of consent, or unlawful processing. It is not absolute and does not apply where processing is necessary, for example for freedom of expression, compliance with a legal obligation, or the establishment, exercise, or defence of legal claims."
+  },
+  {
+    "id": "data_portability",
+    "category": "data-subject-rights",
+    "question": "What does the right to data portability allow a data subject to do?",
+    "reference": "Under Article 20, the data subject has the right to receive their personal data in a structured, commonly used, machine-readable format and to transmit that data to another controller."
+  },
+  {
+    "id": "controller_vs_processor",
+    "category": "definitions",
+    "question": "What is the difference between a 'controller' and a 'processor' under the GDPR?",
+    "reference": "A controller is the entity that determines the purposes and means of processing personal data, whereas a processor processes personal data on behalf of the controller."
+  },
+  {
+    "id": "ccpa_out_of_scope",
+    "category": "out-of-scope",
+    "question": "What is the maximum fine under the California Consumer Privacy Act (CCPA)?",
+    "reference": "The provided documents only cover the GDPR and do not contain information about CCPA fines.",
+    "out_of_scope": true
+  }
+]

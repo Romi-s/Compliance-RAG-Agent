@@ -1,6 +1,15 @@
+from pathlib import Path
 from typing import Optional
 
+from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
+
+# Load .env into os.environ *before* anything reads it. pydantic-settings below
+# fills the Settings model from .env, but it does NOT export to os.environ -- and
+# the LangSmith SDK reads os.environ["LANGSMITH_*"] directly. Without this,
+# tracing is silently off locally (it still works on Cloud Run, where the vars
+# are real environment variables). override=False so real env vars always win.
+load_dotenv(Path(__file__).resolve().parent.parent / ".env", override=False)
 
 
 class Settings(BaseSettings):

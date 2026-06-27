@@ -1,3 +1,4 @@
+import time
 from typing import Optional
 
 import filetype
@@ -5,6 +6,7 @@ from fastapi import APIRouter, File, Form, Header, HTTPException, Request, Uploa
 
 from app.agent.graph import qa_graph
 from app.config import settings
+from app.services import metrics
 from app.schemas.responses import (
     CitationResponse,
     CollectionStatsResponse,
@@ -101,10 +103,33 @@ async def query_documents(
         "api_key": request_key,
     }
 
-    result = qa_graph.invoke(initial_state)
+    # config -> shows up in LangSmith so runs are filterable (own-key vs demo-key,
+    # which model, etc.) instead of a wall of anonymous "LangGraph" runs.
+    t0 = time.perf_counter()
+    result = qa_graph.invoke(
+        initial_state,
+        config={
+            "run_name": "compliance_qa",
+            "tags": ["compliance-rag", "byok" if used_own_key else "demo-key"],
+            "metadata": {"used_own_key": used_own_key, "model": settings.openai_model},
+        },
+    )
+    metrics.query_latency_seconds.observe(time.perf_counter() - t0)
 
     if result.get("error"):
+        metrics.queries_total.labels(outcome="error").inc()
         raise HTTPException(status_code=422, detail=result["error"])
+
+    # Record per-stage latency + retrieval quality for /metrics.
+    metrics.queries_total.labels(outcome="success").inc()
+    if result.get("retrieval_ms") is not None:
+        metrics.retrieval_latency_seconds.observe(result["retrieval_ms"] / 1000)
+    if result.get("generation_ms") is not None:
+        metrics.generation_latency_seconds.observe(result["generation_ms"] / 1000)
+    retrieved_chunks = result.get("retrieved_chunks") or []
+    metrics.chunks_retrieved.observe(len(retrieved_chunks))
+    if retrieved_chunks:
+        metrics.top_relevance_score.observe(max(c["score"] for c in retrieved_chunks))
 
     try:
         total_vectors = get_collection().count()
