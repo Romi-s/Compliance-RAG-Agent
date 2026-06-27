@@ -4,3 +4,6 @@ __pycache__/
 .env
 chroma_data/
 .pytest_cache/
+eval/.venv/
+eval/predictions.json
+eval/ragas_results.csv
