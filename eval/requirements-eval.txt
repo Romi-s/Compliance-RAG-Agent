@@ -1,0 +1,17 @@
+# Dependencies for the eval venv ONLY (eval/.venv). Kept separate from the app's
+# requirements.txt so ragas's older LangChain stack never ships in the Cloud Run
+# image. See eval/README.md for why.
+#
+#   "C:/Users/saljo/miniconda3/python.exe" -m venv eval/.venv
+#   eval/.venv/Scripts/python.exe -m pip install -r eval/requirements-eval.txt
+#
+# Pinned to the 0.3-era LangChain stack: ragas 0.4.x imports a Vertex AI shim that
+# langchain-community 0.4.x dropped, so we hold the whole stack at 0.3.x where
+# ragas 0.2.x is happy. (The serving app runs langchain-core 1.x; that's why these
+# live in a separate venv.)
+ragas>=0.2,<0.3
+langchain>=0.3,<0.4
+langchain-community>=0.3,<0.4
+langchain-openai>=0.2,<0.3
+langchain-core>=0.3,<0.4
+python-dotenv>=1.0.0
