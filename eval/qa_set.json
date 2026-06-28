@@ -1,21 +1,27 @@
 [
   {
-    "id": "breach_notification_window",
-    "category": "breach-notification",
-    "question": "Within what timeframe must a data controller notify the supervisory authority of a personal data breach?",
-    "reference": "The controller must notify the competent supervisory authority without undue delay and, where feasible, no later than 72 hours after becoming aware of the breach, unless the breach is unlikely to result in a risk to the rights and freedoms of individuals."
+    "id": "controller_vs_processor",
+    "category": "definitions",
+    "question": "What is the difference between a 'controller' and a 'processor' under the GDPR?",
+    "reference": "A controller is the entity that determines the purposes and means of processing personal data, whereas a processor processes personal data on behalf of the controller."
   },
   {
-    "id": "fine_tiers",
-    "category": "penalties",
-    "question": "What are the maximum administrative fines under the GDPR?",
-    "reference": "GDPR sets two tiers of fines. The lower tier is up to 10 million EUR, or 2% of total worldwide annual turnover, whichever is higher. The higher tier is up to 20 million EUR, or 4% of total worldwide annual turnover, whichever is higher."
+    "id": "def_personal_data",
+    "category": "definitions",
+    "question": "What does 'personal data' mean under the GDPR?",
+    "reference": "Under Article 4, 'personal data' means any information relating to an identified or identifiable natural person, who is referred to as the 'data subject'."
   },
   {
-    "id": "dpo_required",
-    "category": "governance",
-    "question": "When is an organisation required to appoint a Data Protection Officer (DPO)?",
-    "reference": "A DPO must be designated when processing is carried out by a public authority or body (except courts acting in their judicial capacity); when the core activities require regular and systematic monitoring of data subjects on a large scale; or when the core activities consist of large-scale processing of special categories of data or of personal data relating to criminal convictions and offences."
+    "id": "def_processing",
+    "category": "definitions",
+    "question": "How does the GDPR define 'processing'?",
+    "reference": "Under Article 4, 'processing' means any operation performed on personal data, such as collection, recording, storage, use, disclosure, or erasure."
+  },
+  {
+    "id": "def_data_subject",
+    "category": "definitions",
+    "question": "Who is a 'data subject' under the GDPR?",
+    "reference": "A 'data subject' is the identified or identifiable natural person to whom the personal data relates (Article 4)."
   },
   {
     "id": "right_to_be_forgotten",
@@ -24,22 +30,188 @@
     "reference": "It is the right to erasure under Article 17: a data subject can obtain erasure of their personal data without undue delay on certain grounds, such as the data no longer being necessary, withdrawal of consent, or unlawful processing. It is not absolute and does not apply where processing is necessary, for example for freedom of expression, compliance with a legal obligation, or the establishment, exercise, or defence of legal claims."
   },
   {
+    "id": "right_of_access",
+    "category": "data-subject-rights",
+    "question": "What does the right of access entitle a data subject to obtain?",
+    "reference": "Under the right of access (Article 15), the data subject has the right to obtain confirmation of whether their personal data is being processed and, if so, to receive a copy of that data."
+  },
+  {
+    "id": "right_to_rectification",
+    "category": "data-subject-rights",
+    "question": "What does the right to rectification allow a data subject to do?",
+    "reference": "Under Article 16, the data subject has the right to have inaccurate personal data corrected and incomplete personal data completed."
+  },
+  {
+    "id": "right_to_object",
+    "category": "data-subject-rights",
+    "question": "Can a data subject object to their personal data being used for direct marketing?",
+    "reference": "Yes. Under Article 21, the data subject has the right to object to the processing of their personal data, including processing for direct marketing, at any time."
+  },
+  {
+    "id": "right_to_restriction",
+    "category": "data-subject-rights",
+    "question": "What is the right to restriction of processing?",
+    "reference": "Under Article 18, the data subject has the right to restriction of processing, which is the right to limit how their personal data is used."
+  },
+  {
+    "id": "automated_decision_making",
+    "category": "data-subject-rights",
+    "question": "What right do individuals have in relation to automated decision-making and profiling?",
+    "reference": "Under Article 22, the data subject has the right not to be subject to a decision based solely on automated processing, including profiling, that produces legal effects concerning them or similarly significantly affects them."
+  },
+  {
+    "id": "right_to_information",
+    "category": "data-subject-rights",
+    "question": "What must individuals be told under the right to information and transparency?",
+    "reference": "Under the right to information and transparency (Articles 13-14), individuals must be told who is processing their data, why, on what legal basis, and for how long."
+  },
+  {
     "id": "data_portability",
     "category": "data-subject-rights",
     "question": "What does the right to data portability allow a data subject to do?",
     "reference": "Under Article 20, the data subject has the right to receive their personal data in a structured, commonly used, machine-readable format and to transmit that data to another controller."
   },
   {
-    "id": "controller_vs_processor",
-    "category": "definitions",
-    "question": "What is the difference between a 'controller' and a 'processor' under the GDPR?",
-    "reference": "A controller is the entity that determines the purposes and means of processing personal data, whereas a processor processes personal data on behalf of the controller."
+    "id": "portability_format",
+    "category": "data-subject-rights",
+    "question": "In what format must personal data be provided under the right to data portability?",
+    "reference": "Under the right to data portability (Article 20), personal data must be provided in a structured, commonly used, machine-readable format."
+  },
+  {
+    "id": "erasure_grounds",
+    "category": "right-to-erasure",
+    "question": "On what grounds can a data subject request erasure of their personal data?",
+    "reference": "Under Article 17, erasure can be requested where one of the following grounds applies: the data are no longer necessary for the purposes for which they were collected; the data subject withdraws consent and there is no other legal ground; the data subject objects under Article 21 and there are no overriding legitimate grounds; the data were unlawfully processed; erasure is required to comply with a legal obligation; or the data were collected in relation to the offer of information society services to a child."
+  },
+  {
+    "id": "erasure_exceptions",
+    "category": "right-to-erasure",
+    "question": "In what situations does the right to be forgotten not apply?",
+    "reference": "The right to erasure does not apply to the extent that processing is necessary for exercising the right of freedom of expression and information, for compliance with a legal obligation, for reasons of public interest in the area of public health, for archiving or scientific or historical research purposes, or for the establishment, exercise, or defence of legal claims."
+  },
+  {
+    "id": "erasure_child",
+    "category": "right-to-erasure",
+    "question": "Does the right to erasure cover personal data collected from a child for online services?",
+    "reference": "Yes. One of the grounds for erasure under Article 17 is that the personal data were collected in relation to the offer of information society services to a child."
+  },
+  {
+    "id": "erasure_consent_withdrawn",
+    "category": "right-to-erasure",
+    "question": "If a data subject withdraws their consent, does the controller have to erase their data?",
+    "reference": "Yes. Under Article 17, where the data subject withdraws the consent on which processing is based and there is no other legal ground for the processing, the controller must erase the personal data without undue delay."
+  },
+  {
+    "id": "dpo_required",
+    "category": "governance",
+    "question": "When is an organisation required to appoint a Data Protection Officer (DPO)?",
+    "reference": "A DPO must be designated when processing is carried out by a public authority or body (except courts acting in their judicial capacity); when the core activities require regular and systematic monitoring of data subjects on a large scale; or when the core activities consist of large-scale processing of special categories of data or of personal data relating to criminal convictions and offences."
+  },
+  {
+    "id": "dpo_group",
+    "category": "governance",
+    "question": "Can a group of companies appoint a single Data Protection Officer?",
+    "reference": "Yes. A group of undertakings may appoint a single data protection officer, provided that the DPO is easily accessible from each establishment."
+  },
+  {
+    "id": "dpo_qualifications",
+    "category": "governance",
+    "question": "On what basis must a DPO be appointed, and can the role be outsourced?",
+    "reference": "The DPO must be designated on the basis of professional qualities and, in particular, expert knowledge of data protection law and practices. The DPO may be a staff member of the controller or processor, or may fulfil the tasks under a service contract."
+  },
+  {
+    "id": "dpo_protection",
+    "category": "governance",
+    "question": "What protections and reporting obligations apply to a Data Protection Officer?",
+    "reference": "The DPO must be involved in all issues relating to the protection of personal data, must report to the highest management level, and must not be dismissed or penalised for performing their tasks."
+  },
+  {
+    "id": "dpo_public_authority",
+    "category": "governance",
+    "question": "Do courts have to appoint a Data Protection Officer?",
+    "reference": "A DPO must be designated where processing is carried out by a public authority or body, except for courts acting in their judicial capacity. Courts acting in their judicial capacity are therefore exempt from this requirement."
+  },
+  {
+    "id": "fine_tiers",
+    "category": "penalties",
+    "question": "What are the maximum administrative fines under the GDPR?",
+    "reference": "GDPR sets two tiers of fines. The lower tier is up to 10 million EUR, or 2% of total worldwide annual turnover, whichever is higher. The higher tier is up to 20 million EUR, or 4% of total worldwide annual turnover, whichever is higher."
+  },
+  {
+    "id": "fine_higher_tier_scope",
+    "category": "penalties",
+    "question": "Which types of infringements fall under the higher tier of GDPR fines?",
+    "reference": "The higher tier (up to 20 million EUR, or 4% of total worldwide annual turnover, whichever is higher) applies to infringements of the basic principles for processing, including the conditions for consent (Articles 5, 6, 7, and 9), the data subjects' rights (Articles 12-22), and transfers of personal data to a recipient in a third country (Articles 44-49)."
+  },
+  {
+    "id": "fine_lower_tier_scope",
+    "category": "penalties",
+    "question": "Which types of infringements fall under the lower tier of GDPR fines?",
+    "reference": "The lower tier (up to 10 million EUR, or 2% of total worldwide annual turnover, whichever is higher) applies to infringements of obligations such as those relating to controllers and processors (Articles 8, 11, 25-39, 42, 43), certification bodies, and monitoring bodies."
+  },
+  {
+    "id": "fine_factors",
+    "category": "penalties",
+    "question": "What factors do supervisory authorities weigh when deciding the amount of a fine?",
+    "reference": "When deciding the amount, supervisory authorities consider the nature, gravity, and duration of the infringement, whether it was intentional or negligent, actions taken to mitigate the damage, the degree of cooperation, and the categories of personal data affected."
+  },
+  {
+    "id": "fine_principles",
+    "category": "penalties",
+    "question": "What qualities must GDPR administrative fines have in every case?",
+    "reference": "Administrative fines must in each individual case be effective, proportionate, and dissuasive."
+  },
+  {
+    "id": "breach_notification_window",
+    "category": "breach-notification",
+    "question": "Within what timeframe must a data controller notify the supervisory authority of a personal data breach?",
+    "reference": "The controller must notify the competent supervisory authority without undue delay and, where feasible, no later than 72 hours after becoming aware of the breach, unless the breach is unlikely to result in a risk to the rights and freedoms of individuals."
+  },
+  {
+    "id": "breach_notify_subjects",
+    "category": "breach-notification",
+    "question": "When must a controller communicate a data breach to the affected individuals?",
+    "reference": "When a personal data breach is likely to result in a high risk to the rights and freedoms of natural persons, the controller must also communicate the breach to the affected data subjects without undue delay."
+  },
+  {
+    "id": "breach_exception",
+    "category": "breach-notification",
+    "question": "Is a controller always required to notify the supervisory authority of a personal data breach?",
+    "reference": "No. Notification to the supervisory authority is not required where the personal data breach is unlikely to result in a risk to the rights and freedoms of natural persons."
   },
   {
     "id": "ccpa_out_of_scope",
     "category": "out-of-scope",
     "question": "What is the maximum fine under the California Consumer Privacy Act (CCPA)?",
     "reference": "The provided documents only cover the GDPR and do not contain information about CCPA fines.",
+    "out_of_scope": true
+  },
+  {
+    "id": "oos_hipaa",
+    "category": "out-of-scope",
+    "question": "What are the breach-notification requirements under HIPAA?",
+    "reference": "The provided documents only cover the GDPR and do not contain information about HIPAA or its breach-notification requirements.",
+    "out_of_scope": true
+  },
+  {
+    "id": "oos_dpo_salary",
+    "category": "out-of-scope",
+    "question": "What is the typical salary of a Data Protection Officer?",
+    "reference": "The provided GDPR excerpts describe when and how a Data Protection Officer must be appointed but do not contain any information about DPO salaries.",
+    "out_of_scope": true
+  },
+  {
+    "id": "oos_ai_act",
+    "category": "out-of-scope",
+    "question": "What risk categories does the EU AI Act define?",
+    "reference": "The provided documents only cover the GDPR and do not contain information about the EU AI Act or its risk categories.",
+    "out_of_scope": true
+  },
+  {
+    "id": "oos_lgpd",
+    "category": "out-of-scope",
+    "question": "What is the fine structure under Brazil's LGPD?",
+    "reference": "The provided documents only cover the GDPR and do not contain information about Brazil's LGPD or its fines.",
     "out_of_scope": true
   }
 ]

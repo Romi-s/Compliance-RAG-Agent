@@ -7,3 +7,4 @@ chroma_data/
 eval/.venv/
 eval/predictions.json
 eval/ragas_results.csv
+eval/langsmith_summary.json

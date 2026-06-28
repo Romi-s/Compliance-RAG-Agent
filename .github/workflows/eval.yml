@@ -1,0 +1,72 @@
+name: RAG eval
+
+# Regression harness for the RAG quality metrics.
+#   - Pull requests  -> fast SMOKE eval (curated subset) gates the merge.
+#   - Nightly cron   -> FULL eval over the whole dataset, recorded in LangSmith.
+#   - Manual dispatch-> full eval on demand.
+# Each run records an experiment on the LangSmith dashboard, then check_thresholds
+# fails the job if any metric regresses below its floor.
+
+on:
+  pull_request:
+    paths:
+      - "app/**"
+      - "eval/**"
+      - "requirements.txt"
+      - ".github/workflows/eval.yml"
+  schedule:
+    - cron: "0 3 * * *"   # 03:00 UTC nightly
+  workflow_dispatch: {}
+
+concurrency:
+  group: eval-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      LANGSMITH_API_KEY: ${{ secrets.LANGSMITH_API_KEY }}
+      # Endpoint is the EU region; tracing flushes synchronously in CI.
+      LANGSMITH_TRACING: "true"
+      LANGSMITH_ENDPOINT: "https://eu.api.smith.langchain.com"
+      LANGCHAIN_CALLBACKS_BACKGROUND: "false"
+      LANGSMITH_PROJECT: "RAG-chatbot"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Sync eval dataset to LangSmith
+        run: python -m eval.sync_dataset
+
+      - name: Run eval (smoke on PRs, full otherwise)
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            python -m eval.langsmith_eval --smoke
+          else
+            python -m eval.langsmith_eval
+          fi
+
+      - name: Threshold gate
+        run: python -m eval.check_thresholds
+
+      - name: Upload eval summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-summary
+          path: eval/langsmith_summary.json
+          if-no-files-found: ignore

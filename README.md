@@ -16,7 +16,7 @@ The demo is **public and cost-safe**: every visitor gets a few free questions on
 - **Built-in web UI** (served by FastAPI, same-origin) — ask box, **dynamic suggested questions generated from the indexed corpus**, a **live "under the hood" pipeline view** (vector/BM25 bars, RRF, model, citation chips), document upload, and a Google Cloud request-flow panel.
 - **Public-demo cost controls** — per-visitor rate limits (questions + uploads), a global daily cap, small upload size/page caps, and optional **bring-your-own-key**. See [Cost & security](#cost--security).
 - **Self-seeding corpus** — a curated GDPR knowledge base auto-loads on startup, so the demo always works out of the box.
-- **Observability & evaluation** — **LangSmith** tracing on the LangGraph pipeline (per-node latency + token/cost), a Prometheus **`/metrics`** endpoint (retrieval/generation latency, retrieval-quality score), and a **Ragas** evaluation over a held-out QA set (faithfulness, relevancy, context precision/recall). See [Observability & evaluation](#observability--evaluation).
+- **Observability & evaluation** — **LangSmith** tracing on the LangGraph pipeline (per-node latency + token/cost), a Prometheus **`/metrics`** endpoint (retrieval/generation latency, retrieval-quality score), and an **eval suite** over a held-out QA set: **custom LLM-as-judge** evaluators on a LangSmith **dataset/dashboard**, a **Ragas** offline cross-check, and a **PR + nightly CI regression gate**. See [Observability & evaluation](#observability--evaluation).
 - **Cloud-native** — Dockerized, serverless on Cloud Run, secrets in Secret Manager, **CI/CD via GitHub Actions with Workload Identity Federation (no stored keys)**.
 
 ---
@@ -110,20 +110,27 @@ LANGSMITH_PROJECT=RAG-chatbot
 ### Prometheus metrics — `GET /metrics`
 Exposes retrieval / generation / end-to-end **latency histograms**, the **top retrieval (RRF) relevance score** (a no-LLM proxy for retrieval quality), and chunks-retrieved per query. Scrape with any Prometheus-compatible collector to watch latency SLOs and catch retrieval-quality drift.
 
-### Ragas evaluation (`eval/`)
-A held-out GDPR QA set (`eval/qa_set.json`) is scored on **faithfulness, answer relevancy, context precision, and context recall**, plus a refusal check on an out-of-scope question. It runs in **two steps with separate virtualenvs** — ragas needs an older LangChain stack that conflicts with the app's `langchain-core` 1.x, so eval deps stay isolated and never ship in the Cloud Run image:
+### Evaluation suite (`eval/`)
+A held-out GDPR QA set (`eval/qa_set.json` — ~35 curated pairs spanning definitions, data-subject rights, penalties, breach notification, and out-of-scope refusals) drives two complementary evaluators plus a CI regression gate.
+
+**1. LangSmith dataset + LLM-as-judge → live dashboard.** The QA set is pushed to a LangSmith **Dataset**, then graded by **custom LLM-as-judge** evaluators — `faithfulness`, `answer_relevance`, `context_precision`, plus a deterministic `correct_refusal` check that only applies to out-of-scope questions. Each run records an **experiment** on the LangSmith dashboard, so scores are tracked over time. These evaluators are plain OpenAI calls, so they run in the **serving venv** with no dependency conflict:
 
 ```bash
-# 1. Generate predictions with the real pipeline (serving venv)
-python -m eval.generate_predictions
-
-# 2. Score them with ragas (isolated eval venv)
-python -m venv eval/.venv
-eval/.venv/Scripts/python.exe -m pip install -r eval/requirements-eval.txt
-eval/.venv/Scripts/python.exe eval/score_ragas.py
+python -m eval.sync_dataset            # push qa_set.json -> LangSmith Dataset (idempotent)
+python -m eval.langsmith_eval --smoke  # grade the curated smoke subset (fast PR gate)
+python -m eval.langsmith_eval          # grade the full dataset (nightly)
 ```
 
-The steps hand off via `eval/predictions.json`; per-question results are written to `eval/ragas_results.csv`. Generation runs are tagged `eval` in LangSmith.
+**2. Ragas offline cross-check.** The same pipeline output is also scored offline with **Ragas** (`faithfulness, answer relevancy, context precision, context recall`) as a rigorous second opinion. Ragas needs an older LangChain stack that conflicts with the app's `langchain-core` 1.x, so it runs in an **isolated venv** and never ships in the Cloud Run image:
+
+```bash
+python -m eval.generate_predictions    # serving venv -> predictions.json
+python -m venv eval/.venv
+eval/.venv/Scripts/python.exe -m pip install -r eval/requirements-eval.txt
+eval/.venv/Scripts/python.exe eval/score_ragas.py   # -> ragas_results.csv
+```
+
+**Regression harness.** [`.github/workflows/eval.yml`](.github/workflows/eval.yml) runs the **smoke** eval on every pull request and the **full** eval nightly; `eval/check_thresholds.py` fails the job if any metric drops below its floor (`correct_refusal` is held at 1.0 — answering an out-of-scope question is a hallucination). Eval runs are tagged `eval` in LangSmith so they never mix with live traffic.
 
 ---
 
@@ -159,8 +166,10 @@ Open **http://localhost:8080**. On first load it embeds the bundled GDPR corpus 
 | `CHUNK_SIZE` / `CHUNK_OVERLAP` | `512` / `64` | Chunking parameters |
 | `RETRIEVAL_TOP_K` / `FINAL_TOP_K` | `10` / `5` | Candidates per method / chunks sent to the LLM |
 | `LANGSMITH_TRACING` | — | Set `true` to send LangGraph traces to LangSmith |
-| `LANGSMITH_API_KEY` | — | LangSmith API key (enables tracing) |
+| `LANGSMITH_API_KEY` | — | LangSmith API key (enables tracing + eval) |
 | `LANGSMITH_PROJECT` | — | LangSmith project name traces are grouped under |
+| `LANGSMITH_ENDPOINT` | US default | Set to `https://eu.api.smith.langchain.com` for EU-region accounts (else 403) |
+| `LANGCHAIN_CALLBACKS_BACKGROUND` | `true` | Set `false` on serverless (Cloud Run) so traces flush within the request before CPU throttles |
 
 ---
 
@@ -175,6 +184,9 @@ gcloud run deploy compliance-rag-agent \
   --set-secrets=OPENAI_API_KEY=openai-api-key:latest \
   --memory 1Gi --cpu 1 --min-instances 0 --max-instances 3 --timeout 300
 ```
+
+> To enable **production tracing**, also add the LangSmith secret and config (this is what [`deploy.yml`](.github/workflows/deploy.yml) does):
+> `--set-secrets=...,LANGSMITH_API_KEY=langsmith-api-key:latest` and `--set-env-vars=LANGSMITH_TRACING=true,LANGSMITH_ENDPOINT=https://eu.api.smith.langchain.com,LANGCHAIN_CALLBACKS_BACKGROUND=false,LANGSMITH_PROJECT=RAG-chatbot`
 
 ### Continuous deployment (GitHub Actions, keyless)
 [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) deploys on every push to `main`. It authenticates to GCP via **Workload Identity Federation** — GitHub uses a short-lived OIDC token to impersonate a deploy service account, so **no service-account key is ever stored** in the repo.
@@ -203,13 +215,18 @@ compliance-rag-agent/
 │   ├── schemas/responses.py    # Pydantic v2 response models
 │   ├── static/index.html       # the web UI
 │   └── data/gdpr_excerpts.txt  # bundled demo knowledge base
-├── eval/                       # offline evaluation (isolated deps)
-│   ├── qa_set.json             # held-out GDPR QA set
-│   ├── generate_predictions.py # step 1: run the pipeline -> predictions.json
-│   ├── score_ragas.py          # step 2: grade with ragas -> ragas_results.csv
-│   └── requirements-eval.txt   # eval-only deps (separate venv)
+├── eval/                       # evaluation suite (LangSmith dashboard + offline Ragas)
+│   ├── qa_set.json             # held-out GDPR QA set (~35 curated pairs)
+│   ├── sync_dataset.py         # push qa_set.json -> LangSmith Dataset (idempotent)
+│   ├── langsmith_eval.py       # custom LLM-as-judge evaluators via langsmith.evaluate()
+│   ├── check_thresholds.py     # CI gate: fail the build if a metric regresses
+│   ├── generate_predictions.py # Ragas step 1: run the pipeline -> predictions.json
+│   ├── score_ragas.py          # Ragas step 2: grade -> ragas_results.csv (isolated venv)
+│   └── requirements-eval.txt   # Ragas-only deps (separate venv)
 ├── tests/                      # 25 tests (hermetic — no network/keys)
-├── .github/workflows/deploy.yml# GitHub Actions CI/CD (WIF)
+├── .github/workflows/
+│   ├── deploy.yml              # deploy to Cloud Run (WIF, keyless)
+│   └── eval.yml                # RAG eval regression (PR smoke + nightly full)
 ├── Dockerfile
 └── requirements.txt
 ```

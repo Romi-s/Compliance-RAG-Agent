@@ -26,11 +26,16 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Deploy to Cloud Run
+        # --set-secrets / --set-env-vars are declarative: list everything the
+        # service needs so the deploy is reproducible. Both the OpenAI and
+        # LangSmith keys come from Secret Manager; the LangSmith config enables
+        # production tracing (EU endpoint + synchronous flush on serverless).
         run: |
           gcloud run deploy compliance-rag-agent \
             --source . \
             --project compliance-rag-499207 \
             --region europe-west1 \
             --allow-unauthenticated \
-            --set-secrets=OPENAI_API_KEY=openai-api-key:latest \
+            --set-secrets=OPENAI_API_KEY=openai-api-key:latest,LANGSMITH_API_KEY=langsmith-api-key:latest \
+            --set-env-vars=LANGSMITH_TRACING=true,LANGSMITH_ENDPOINT=https://eu.api.smith.langchain.com,LANGCHAIN_CALLBACKS_BACKGROUND=false,LANGSMITH_PROJECT=RAG-chatbot \
             --memory 1Gi --cpu 1 --min-instances 0 --max-instances 3 --timeout 300
