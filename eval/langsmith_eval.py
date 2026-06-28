@@ -14,6 +14,7 @@ Evaluators (LLM-as-judge, score 0.0-1.0):
   answer_relevance    - the answer actually addresses the question
   context_precision   - retrieved context is relevant/sufficient (answerable only)
   correct_refusal     - out-of-scope questions are declined, not fabricated (OOS only)
+  retrieval_recall    - answer-bearing passage was retrieved into top-k (deterministic; answerable only)
 
 Needs OPENAI_API_KEY + LANGSMITH_API_KEY (+ LANGSMITH_ENDPOINT for the EU account),
 all read from ../.env via app.config.
@@ -21,6 +22,7 @@ all read from ../.env via app.config.
 
 import argparse
 import json
+import re
 from pathlib import Path
 
 from app.config import settings  # imports load .env (OPENAI_/LANGSMITH_ env vars)
@@ -102,6 +104,11 @@ def _is_oos(example) -> bool:
     return bool((example.metadata or {}).get("out_of_scope"))
 
 
+def _norm(s: str) -> str:
+    """Lowercase + collapse whitespace, so snippet matching is robust to chunk wrapping."""
+    return re.sub(r"\s+", " ", s or "").strip().lower()
+
+
 # --------------------------------------------------------------------------- #
 # Evaluators  (stable (run, example) signature)                               #
 # --------------------------------------------------------------------------- #
@@ -176,7 +183,26 @@ def correct_refusal(run, example):
     }
 
 
-EVALUATORS = [faithfulness, answer_relevance, context_precision, correct_refusal]
+def retrieval_recall(run, example):
+    # Deterministic retrieval recall@k: did the answer-bearing passage actually make
+    # it into the retrieved context? No LLM call. Skips out-of-scope pairs and any
+    # pair without an expected_snippet. This measures the retriever directly (separate
+    # from whether the LLM then used the context well).
+    snippet = (example.outputs or {}).get("expected_snippet")
+    if not snippet:
+        return _SKIP
+    contexts = _norm("\n".join((run.outputs or {}).get("contexts", [])))
+    hit = _norm(snippet) in contexts
+    return {
+        "key": "retrieval_recall",
+        "score": 1.0 if hit else 0.0,
+        "comment": "answer-bearing passage retrieved"
+        if hit
+        else f"expected snippet not in top-k: {snippet[:80]}",
+    }
+
+
+EVALUATORS = [faithfulness, answer_relevance, context_precision, correct_refusal, retrieval_recall]
 
 
 # --------------------------------------------------------------------------- #

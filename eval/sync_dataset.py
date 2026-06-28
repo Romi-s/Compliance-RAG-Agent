@@ -37,6 +37,8 @@ SMOKE_IDS = {
     "fine_tiers",               # penalties
     "breach_notification_window",  # breach-notification
     "fine_higher_tier_scope",   # hard-recall (specific article list)
+    "lawful_bases",             # lawful-basis (aggregation / list type)
+    "fine_cap_false_premise",   # robustness (false-premise correction)
     "ccpa_out_of_scope",        # out-of-scope / refusal
 }
 
@@ -45,6 +47,8 @@ def _payload(q: dict) -> tuple[dict, dict, dict]:
     """Split one qa_set entry into (inputs, outputs, metadata) for LangSmith."""
     inputs = {"question": q["question"]}
     outputs = {"reference": q["reference"]}
+    if q.get("expected_snippet"):
+        outputs["expected_snippet"] = q["expected_snippet"]  # gold source for retrieval_recall
     metadata = {
         "qa_id": q["id"],
         "category": q["category"],

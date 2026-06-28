@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 .env
 chroma_data/
+chroma_eval/
 .pytest_cache/
 eval/.venv/
 eval/predictions.json

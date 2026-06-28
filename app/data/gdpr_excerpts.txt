@@ -107,3 +107,109 @@ after having become aware of it, unless the breach is unlikely to result in a ri
 the rights and freedoms of natural persons. When the breach is likely to result in a
 high risk, the controller shall also communicate it to the affected data subjects
 without undue delay.
+
+==================================================================
+TERRITORIAL SCOPE (Article 3)
+==================================================================
+GDPR applies to the processing of personal data by a controller or processor
+established in the Union, regardless of whether the processing itself takes place
+in the Union. It also applies to a controller or processor not established in the
+Union where the processing relates to: (a) the offering of goods or services to
+data subjects who are in the Union, irrespective of whether payment is required;
+or (b) the monitoring of the behaviour of data subjects as far as their behaviour
+takes place within the Union.
+
+==================================================================
+PRINCIPLES RELATING TO PROCESSING (Article 5)
+==================================================================
+Personal data shall be:
+(a) processed lawfully, fairly, and in a transparent manner ('lawfulness, fairness
+    and transparency');
+(b) collected for specified, explicit, and legitimate purposes and not further
+    processed in a manner incompatible with those purposes ('purpose limitation');
+(c) adequate, relevant, and limited to what is necessary in relation to the purposes
+    ('data minimisation');
+(d) accurate and, where necessary, kept up to date ('accuracy');
+(e) kept in a form which permits identification of data subjects for no longer than
+    is necessary ('storage limitation');
+(f) processed in a manner that ensures appropriate security of the personal data,
+    including protection against unauthorised processing and accidental loss
+    ('integrity and confidentiality').
+
+The controller is responsible for, and must be able to demonstrate compliance with,
+these principles ('accountability').
+
+==================================================================
+LAWFULNESS OF PROCESSING — LEGAL BASES (Article 6)
+==================================================================
+Processing is lawful only if and to the extent that at least one of the following
+legal bases applies:
+
+(a) the data subject has given consent to the processing for one or more specific purposes;
+(b) processing is necessary for the performance of a contract with the data subject;
+(c) processing is necessary for compliance with a legal obligation to which the
+    controller is subject;
+(d) processing is necessary to protect the vital interests of the data subject or
+    another natural person;
+(e) processing is necessary for the performance of a task carried out in the public
+    interest or in the exercise of official authority;
+(f) processing is necessary for the purposes of the legitimate interests pursued by
+    the controller or a third party, except where such interests are overridden by
+    the interests or fundamental rights and freedoms of the data subject.
+
+==================================================================
+CONDITIONS FOR CONSENT (Article 7)
+==================================================================
+Where processing is based on consent, the controller must be able to demonstrate
+that the data subject has consented. A request for consent must be presented in a
+manner clearly distinguishable from other matters, in an intelligible and easily
+accessible form, using clear and plain language. The data subject has the right to
+withdraw consent at any time, and it must be as easy to withdraw consent as to give it.
+
+==================================================================
+SPECIAL CATEGORIES OF PERSONAL DATA (Article 9)
+==================================================================
+Processing of special categories of personal data is prohibited. These categories are
+data revealing racial or ethnic origin, political opinions, religious or philosophical
+beliefs, or trade union membership, and the processing of genetic data, biometric data
+for the purpose of uniquely identifying a natural person, data concerning health, or
+data concerning a natural person's sex life or sexual orientation. The prohibition does
+not apply where one of the exceptions in Article 9(2) applies — for example, the data
+subject has given explicit consent, or processing is necessary for reasons of substantial
+public interest or for the purposes of preventive or occupational medicine.
+
+==================================================================
+SECURITY OF PROCESSING (Article 32)
+==================================================================
+Taking into account the state of the art, the costs of implementation, and the risks,
+the controller and the processor shall implement appropriate technical and organisational
+measures to ensure a level of security appropriate to the risk, including as appropriate:
+the pseudonymisation and encryption of personal data; the ability to ensure the ongoing
+confidentiality, integrity, availability, and resilience of processing systems and services;
+the ability to restore the availability of and access to personal data in a timely manner
+in the event of a physical or technical incident; and a process for regularly testing,
+assessing, and evaluating the effectiveness of those measures.
+
+==================================================================
+DATA PROTECTION IMPACT ASSESSMENT (Article 35)
+==================================================================
+Where a type of processing, in particular one using new technologies, is likely to result
+in a high risk to the rights and freedoms of natural persons, the controller shall, prior
+to the processing, carry out a data protection impact assessment (DPIA). A DPIA is required
+in particular in the case of: a systematic and extensive evaluation of personal aspects
+based on automated processing, including profiling, on which decisions are based that
+produce legal or similarly significant effects; processing on a large scale of special
+categories of data; or systematic monitoring of a publicly accessible area on a large scale.
+
+==================================================================
+INTERNATIONAL DATA TRANSFERS (Chapter V, Articles 44–49)
+==================================================================
+A transfer of personal data to a third country or an international organisation may take
+place only in compliance with Chapter V. A transfer is permitted where the Commission has
+decided that the third country ensures an adequate level of protection (an 'adequacy
+decision', Article 45). In the absence of an adequacy decision, a transfer may take place
+if the controller or processor has provided appropriate safeguards (Article 46), such as
+standard contractual clauses (SCCs) or binding corporate rules (BCRs, Article 47), and on
+condition that enforceable data subject rights and effective legal remedies are available.
+In the absence of those, a transfer may rely only on the specific derogations in Article 49,
+such as the data subject's explicit consent or necessity for the performance of a contract.

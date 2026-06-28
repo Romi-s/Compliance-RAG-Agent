@@ -16,7 +16,7 @@ The demo is **public and cost-safe**: every visitor gets a few free questions on
 - **Built-in web UI** (served by FastAPI, same-origin) — ask box, **dynamic suggested questions generated from the indexed corpus**, a **live "under the hood" pipeline view** (vector/BM25 bars, RRF, model, citation chips), document upload, and a Google Cloud request-flow panel.
 - **Public-demo cost controls** — per-visitor rate limits (questions + uploads), a global daily cap, small upload size/page caps, and optional **bring-your-own-key**. See [Cost & security](#cost--security).
 - **Self-seeding corpus** — a curated GDPR knowledge base auto-loads on startup, so the demo always works out of the box.
-- **Observability & evaluation** — **LangSmith** tracing on the LangGraph pipeline (per-node latency + token/cost), a Prometheus **`/metrics`** endpoint (retrieval/generation latency, retrieval-quality score), and an **eval suite** over a held-out QA set: **custom LLM-as-judge** evaluators on a LangSmith **dataset/dashboard**, a **Ragas** offline cross-check, and a **PR + nightly CI regression gate**. See [Observability & evaluation](#observability--evaluation).
+- **Observability & evaluation** — **LangSmith** tracing on the LangGraph pipeline (per-node latency + token/cost), a Prometheus **`/metrics`** endpoint (retrieval/generation latency, retrieval-quality score), and an **eval suite** over a held-out QA set: **custom evaluators** (LLM-as-judge + deterministic **retrieval-recall**) on a LangSmith **dataset/dashboard**, a **Ragas** offline cross-check, and a **PR + nightly CI regression gate**. See [Observability & evaluation](#observability--evaluation).
 - **Cloud-native** — Dockerized, serverless on Cloud Run, secrets in Secret Manager, **CI/CD via GitHub Actions with Workload Identity Federation (no stored keys)**.
 
 ---
@@ -111,9 +111,9 @@ LANGSMITH_PROJECT=RAG-chatbot
 Exposes retrieval / generation / end-to-end **latency histograms**, the **top retrieval (RRF) relevance score** (a no-LLM proxy for retrieval quality), and chunks-retrieved per query. Scrape with any Prometheus-compatible collector to watch latency SLOs and catch retrieval-quality drift.
 
 ### Evaluation suite (`eval/`)
-A held-out GDPR QA set (`eval/qa_set.json` — ~35 curated pairs spanning definitions, data-subject rights, penalties, breach notification, and out-of-scope refusals) drives two complementary evaluators plus a CI regression gate.
+A held-out GDPR QA set (`eval/qa_set.json` — ~47 curated pairs across 14 categories: definitions, scope, principles, lawful basis, consent, data-subject rights, erasure, governance, special categories, security, penalties, breach notification, transfers, and out-of-scope refusals; including harder comparison / aggregation / multi-hop / false-premise questions) drives two complementary evaluators plus a CI regression gate.
 
-**1. LangSmith dataset + LLM-as-judge → live dashboard.** The QA set is pushed to a LangSmith **Dataset**, then graded by **custom LLM-as-judge** evaluators — `faithfulness`, `answer_relevance`, `context_precision`, plus a deterministic `correct_refusal` check that only applies to out-of-scope questions. Each run records an **experiment** on the LangSmith dashboard, so scores are tracked over time. These evaluators are plain OpenAI calls, so they run in the **serving venv** with no dependency conflict:
+**1. LangSmith dataset + LLM-as-judge → live dashboard.** The QA set is pushed to a LangSmith **Dataset**, then graded by **custom evaluators** — LLM-as-judge `faithfulness`, `answer_relevance`, and `context_precision`; a deterministic `correct_refusal` check for out-of-scope questions; and a deterministic **`retrieval_recall`** that checks whether the answer-bearing passage (a gold `expected_snippet`) actually reached the top-k — measuring the retriever directly, separate from generation. Each run records an **experiment** on the LangSmith dashboard, so scores are tracked over time. The judge evaluators are plain OpenAI calls, so they run in the **serving venv** with no dependency conflict:
 
 ```bash
 python -m eval.sync_dataset            # push qa_set.json -> LangSmith Dataset (idempotent)
@@ -216,10 +216,11 @@ compliance-rag-agent/
 │   ├── static/index.html       # the web UI
 │   └── data/gdpr_excerpts.txt  # bundled demo knowledge base
 ├── eval/                       # evaluation suite (LangSmith dashboard + offline Ragas)
-│   ├── qa_set.json             # held-out GDPR QA set (~35 curated pairs)
+│   ├── qa_set.json             # held-out GDPR QA set (~47 curated pairs, w/ gold expected_snippet)
 │   ├── sync_dataset.py         # push qa_set.json -> LangSmith Dataset (idempotent)
-│   ├── langsmith_eval.py       # custom LLM-as-judge evaluators via langsmith.evaluate()
+│   ├── langsmith_eval.py       # custom evaluators (LLM-judge + retrieval_recall) via langsmith.evaluate()
 │   ├── check_thresholds.py     # CI gate: fail the build if a metric regresses
+│   ├── langsmith_ui_evaluators.md # paste-ready rubrics for no-code online judges in the LangSmith UI
 │   ├── generate_predictions.py # Ragas step 1: run the pipeline -> predictions.json
 │   ├── score_ragas.py          # Ragas step 2: grade -> ragas_results.csv (isolated venv)
 │   └── requirements-eval.txt   # Ragas-only deps (separate venv)
